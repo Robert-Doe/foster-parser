@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>T2-01 · What mXSS Actually Is — Foster Parenting course, Track 2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../templates/course.css">
+</head>
+<body>
+<div class="sheet">
+
+<header class="masthead">
+  <p class="eyebrow">Track 2 · Module T2-01 · Applied layer · Defensive / educational</p>
+  <h1>What mXSS<em>Actually Is</em></h1>
+  <p class="thesis">Not a new parser bug. The <b>same</b>, correctly-specified tree construction Track 1 spent thirteen modules building — pointed at a piece of code that assumed the tree would look like the source markup suggested.</p>
+
+  <div class="therule">
+    <span class="lbl">What this module proves</span>
+    <p>An <code>&lt;img&gt;</code> tag placed inside a <code>&lt;table&gt;</code> — exactly where a template author put it — ends up, after ordinary parsing, <span class="hi">as the table's sibling, not its descendant</span>. Fully attributed. Structurally invisible to any inspector that only walks <code>table &gt; tbody &gt; tr &gt; td</code>.</p>
+  </div>
+</header>
+
+<section class="mod" id="prereqs">
+  <div class="modhead"><span class="modnum">00</span><h2>Prerequisites</h2></div>
+  <div class="prereqs">
+    <span class="lbl">Read these first if any term below is unfamiliar</span>
+    <a class="tag" href="../../track1-core/05_seven_substeps/tutorial.html">Track 1 Module 05 · The seven substeps</a>
+    <a class="tag" href="../../lessons/02_scope_and_active_formatting/03_deepdive_security_implications.html">Deep dive · Security implications</a>
+  </div>
+</section>
+
+<section class="mod" id="analogy">
+  <div class="modhead"><span class="modnum">01</span><h2>The Big Analogy</h2></div>
+  <div class="analogy">
+    <p>A guard checks IDs at the door of a specific room, confident that everyone who came to the party is somewhere inside that room, because that's where the invitations said to go. What the guard doesn't know is that the building's own layout — nothing anyone snuck past, nothing anyone tampered with — quietly redirects a specific category of guest to the hallway instead, before they ever reach the room's door. The guard's checklist is airtight for the room. The hallway was never on the checklist.</p>
+  </div>
+</section>
+
+<section class="mod" id="steps">
+  <div class="modhead"><span class="modnum">02</span><h2>What Happens, Step by Step</h2></div>
+  <div class="spec">
+    <ol>
+      <li>User-controlled content — an <code>&lt;img&gt;</code> tag with an inert marker attribute standing in for a dangerous one — is placed inside a <code>&lt;table&gt;</code>, inside a wrapper <code>&lt;div id="sandbox"&gt;</code>.</li>
+      <li>This exact input is parsed with Track 1's own, already-verified <code>dispatch13</code> engine, unchanged.</li>
+      <li>A "narrow inspector" walks only <code>table &gt; tbody &gt; tr &gt; td</code> — the shape a template author would reasonably expect user content dropped into a table to have.</li>
+      <li>A full walk of the whole <code>#sandbox</code> subtree runs separately, for comparison.</li>
+      <li>The <code>&lt;img&gt;</code> is fostered (Track 1, Modules 02–09) to land as a sibling of the table — found by the full walk, found by nobody doing the narrow one.</li>
+    </ol>
+  </div>
+</section>
+
+<section class="mod" id="map">
+  <div class="modhead"><span class="modnum">03</span><h2>A Map of This Module's State</h2></div>
+  <div class="rail">
+    <div class="railbox">
+      <h4>What the narrow inspector checks</h4>
+      <pre class="tree">table
+└─ tbody
+   └─ tr
+      └─ td
+         └─ (nothing here to check)</pre>
+    </div>
+    <div class="railbox">
+      <h4>What's actually in the tree</h4>
+      <pre class="tree">div [id=sandbox]
+├─ <span class="new">img [src=x, data-dangerous=yes]</span>   <span class="caret">← never checked</span>
+└─ table
+   └─ (empty)</pre>
+    </div>
+  </div>
+</section>
+
+<section class="mod" id="code">
+  <div class="modhead"><span class="modnum">04</span><h2>The Code, Explained</h2></div>
+  <p>The assumption, made concrete as code — and exactly where it goes wrong:</p>
+  <pre><code><span class="c">function collectFromAssumedTableCells(tableElement) {
+  const found = [];
+  for (const tbody of tableElement.children) {</span>
+    <span class="y">// Assumes: everything the user could have injected is somewhere
+    // under here. Track 1 Modules 02-09 are the reason that's false.</span><span class="c">
+    if (tbody.tagName !== 'tbody') continue;
+    </span><span class="c">/* ...tr, td... */</span><span class="c">
+  }
+  return found;
+}</span></code></pre>
+  <p>Full rationale, including the firm line this module sets for the rest of Track 2 (structural proof only, never a real payload), is in <a href="DECISIONS.md">DECISIONS.md</a>.</p>
+</section>
+
+<section class="mod" id="limits">
+  <div class="modhead"><span class="modnum">05</span><h2>Limits — What You Cannot Do Yet</h2></div>
+  <div class="compare">
+    <div class="cant">
+      <h4>Can't do yet</h4>
+      <ul>
+        <li>Break a REAL sanitizer library — this module demonstrates the mechanism in isolation, on a purpose-built "narrow inspector," not on production code</li>
+        <li>Show the mechanism working with whitespace/text-fusion involved — that's T2-03</li>
+        <li>Show a defense that actually catches this — that's T2-04</li>
+      </ul>
+    </div>
+    <div class="can">
+      <h4>Can do</h4>
+      <ul>
+        <li>Prove, with a real (if purpose-built) inspector and a real (if simplified) parser, that "check only the expected structure" is an unsafe sanitization strategy</li>
+        <li>Point at the exact Track 1 modules responsible for the specific escape demonstrated</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="mod" id="run">
+  <div class="modhead"><span class="modnum">06</span><h2>Run It</h2></div>
+  <div class="io">
+    <span class="lab">Command</span>
+    <pre><code>cd track2-mxss/01_what_mxss_is
+node test/demo.js</code></pre>
+    <span class="lab">Expected output (captured verbatim from a real run)</span>
+    <pre><code>── Actual final tree, this course's own Track 1 engine ──
+div [id=sandbox]
+  img [src=x,data-dangerous=yes]
+  table
+
+── What a "narrow inspector" (table &gt; tbody &gt; tr &gt; td only) sees ──
+Elements found by the narrow inspector: (none)
+
+── What a full walk of the actual sandbox subtree sees ──
+Elements found by the full walk: [ 'img', 'table' ]
+
+OK — all assertions passed. Track 2 Module T2-01: what mXSS actually is, verified.</code></pre>
+  </div>
+  <div class="callout watch">
+    <span class="ct">Getting a blank or broken result?</span>
+    <p>If the narrow inspector finds the <code>&lt;img&gt;</code>, check that Track 1's <code>dispatch13</code> is being used unmodified — this demo depends on real fostering behavior, not a stand-in.</p>
+  </div>
+</section>
+
+<section class="mod" id="brain">
+  <div class="modhead"><span class="modnum">07</span><h2>Brain Exercise</h2></div>
+  <details>
+    <summary>The narrow inspector would have caught this <code>&lt;img&gt;</code> if it also checked direct children of <code>#sandbox</code>, not just table cells. Does that mean the fix is "walk one level higher"?</summary>
+    <p>It fixes THIS specific example, but not the general problem — which is exactly why Track 2 continues rather than stopping here. "Walk one level higher" is still an assumed-shape check; Module 05's own nested-table example (<code>&lt;table&gt;&lt;td&gt;&lt;table&gt;&lt;tr&gt;FOO&lt;/table&gt;&lt;/table&gt;</code>) shows fostered content can land arbitrarily deep inside unrelated structure, not just "one level up." The only inspector that can't be out-maneuvered this way is one that walks the ENTIRE resulting tree, unconditionally — which is a real, buildable defense (T2-04), not a bigger assumption.</p>
+  </details>
+</section>
+
+<section class="mod" id="faq">
+  <div class="modhead"><span class="modnum">08</span><h2>There Are No Dumb Questions</h2></div>
+
+  <details>
+    <summary>Why does this course keep saying "structural claim" instead of just showing a working alert() popup — wouldn't that make the danger more convincing?</summary>
+    <p>The tree-shape fact — a node lands somewhere an inspector didn't check — is the entire technical content of the vulnerability class. Whether a specific attribute on that node happens to be one a specific browser executes is a separate, orthogonal fact about browser behavior, not about parsing, and demonstrating it would require constructing something that actually runs in a browser context — which this course won't do, on principle, regardless of how contained the demonstration would be. The structural proof is complete without it.</p>
+  </details>
+
+  <details>
+    <summary>Is this a bug in the HTML parser?</summary>
+    <p>No — worth stating as plainly as possible. Every module in Track 1 verified this engine's behavior against real, unmodified browsers; foster parenting is specified, intentional, and has existed in this form for over a decade specifically to make malformed table markup produce a deterministic, sane tree instead of undefined behavior. The "bug," if there is one, lives entirely in code that reasons about markup without accounting for what a spec-compliant parser actually does with it.</p>
+  </details>
+</section>
+
+<section class="mod" id="next">
+  <div class="modhead"><span class="modnum">09</span><h2>What's Next</h2></div>
+  <p>T2-02 builds a small, deliberately naive allowlist sanitizer — the kind that scans a source string (or a shallow DOM read) for disallowed tags — and defeats it using nothing but the fostering behavior Track 1 already built and verified, no new parser tricks required.</p>
+</section>
+
+<div class="modnav">
+  <span><span class="dir">Previous</span><a href="../../lessons/02_scope_and_active_formatting/03_deepdive_security_implications.html">← Deep dive: security implications</a></span>
+  <span class="next"><span class="dir">Next</span><a href="../02_naive_sanitizer_break/tutorial.html">T2-02 — Naive sanitizer break →</a></span>
+</div>
+
+<div class="colophon">
+  <h3>Colophon</h3>
+  <p>Source: <code>track2-mxss/01_what_mxss_is/src/narrow_inspector.js</code>. Full rationale: <a href="DECISIONS.md">DECISIONS.md</a>. Terms defined here are logged in the root <a href="../../GLOSSARY.md">GLOSSARY.md</a>. Citations in <a href="../../REFERENCES.md">REFERENCES.md</a>.</p>
+</div>
+
+</div>
+</body>
+</html>
