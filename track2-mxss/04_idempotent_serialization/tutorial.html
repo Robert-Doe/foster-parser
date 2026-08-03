@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>T2-04 · Idempotent Serialization Defense — Foster Parenting course, Track 2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../templates/course.css">
+</head>
+<body>
+<div class="sheet">
+
+<header class="masthead">
+  <p class="eyebrow">Track 2 · Module T2-04 · The defense</p>
+  <h1>Idempotent Serialization<em>Defense</em></h1>
+  <p class="thesis">Not a fix for foster parenting specifically. A general check — <b>parse, serialize, reparse, compare</b> — that catches T2-01 through T2-03's attacks without knowing any of their names, because it doesn't trust any representation of a tree except the tree a real, independent parse actually produces.</p>
+
+  <div class="therule">
+    <span class="lbl">What this module proves</span>
+    <p>A tree built via direct DOM mutation (<code>table.appendChild(textNode)</code> — <span class="hi">exactly the shortcut Track 1 Module 11 warned about</span>) fails this check outright; a tree built by real parsing passes it cleanly. No false alarms, no missed catches, on either of this module's test cases.</p>
+  </div>
+</header>
+
+<section class="mod" id="prereqs">
+  <div class="modhead"><span class="modnum">00</span><h2>Prerequisites</h2></div>
+  <div class="prereqs">
+    <span class="lbl">Read these first if any term below is unfamiliar</span>
+    <a class="tag" href="../../track1-core/11_templates_fragments/tutorial.html">Track 1 Module 11 · Templates, fragments, detached tables</a>
+    <a class="tag" href="../01_what_mxss_is/tutorial.html">T2-01 · What mXSS actually is</a>
+  </div>
+</section>
+
+<section class="mod" id="analogy">
+  <div class="modhead"><span class="modnum">01</span><h2>The Big Analogy</h2></div>
+  <div class="analogy">
+    <p>Instead of a guard trying to anticipate every hallway a visitor might slip into (T2-01's narrow inspector), or trusting a claim about where someone already is (T2-02's source-position heuristic), or checking people one at a time as they enter (T2-03's incremental checker) — this guard does something structurally different: takes a snapshot of the whole building's current occupancy, has the ENTIRE building rebuilt from scratch based on that snapshot, and compares the new building to the old one, room by room. If anything is in a different room the second time, something about the first snapshot wasn't trustworthy as a description of a stable building — full stop, no need to know why.</p>
+  </div>
+</section>
+
+<section class="mod" id="steps">
+  <div class="modhead"><span class="modnum">02</span><h2>What Happens, Step by Step</h2></div>
+  <div class="spec">
+    <ol>
+      <li><code>serializeToHTML(node)</code> — new in Track 2 — turns a tree back into an HTML string, the direction Track 1 never needed.</li>
+      <li><code>checkIdempotent(rootNode, reparseFn)</code> serializes <code>rootNode</code>, reparses that exact string via <code>reparseFn</code> (real tree construction), and compares both trees structurally via <code>canonicalize</code>.</li>
+      <li>Case A builds a tree via direct DOM-mutation-style insertion — <code>table.appendChild</code>-equivalent, bypassing "appropriate place for inserting a node" (Prerequisite P5) entirely, exactly as Track 1 Module 11 warned real DOM mutation does.</li>
+      <li>The check catches it: reparsing the serialized string fosters the text out, disagreeing with the original tree.</li>
+      <li>Case B builds a tree via real parsing (no shortcuts) and confirms the check reports it stable — no false alarm on legitimately correct content.</li>
+    </ol>
+  </div>
+</section>
+
+<section class="mod" id="map">
+  <div class="modhead"><span class="modnum">03</span><h2>A Map of This Module's State</h2></div>
+  <div class="rail">
+    <div class="railbox">
+      <h4>Case A — direct DOM mutation</h4>
+      <pre class="tree">Before (what the sanitizer built):
+div
+└─ table
+   └─ #text "x"
+
+After reparse:
+div
+├─ <span class="new">#text "x"</span>   <span class="caret">← moved!</span>
+└─ table   <span class="caret">← now empty</span>
+
+STABLE? NO</pre>
+    </div>
+    <div class="railbox">
+      <h4>Case B — real parsing</h4>
+      <pre class="tree">Before:
+div
+└─ table
+   └─ tbody
+      └─ tr
+         └─ td
+            └─ #text "x"
+
+After reparse: identical.
+
+STABLE? YES</pre>
+    </div>
+  </div>
+</section>
+
+<section class="mod" id="code">
+  <div class="modhead"><span class="modnum">04</span><h2>The Code, Explained</h2></div>
+  <p>The whole defense, in one function:</p>
+  <pre><code><span class="c">function checkIdempotent(rootNode, reparseFn) {
+  const serialized = serializeToHTML(rootNode);</span>
+  <span class="y">const reparsedRoot = reparseFn(serialized);</span><span class="c">
+  const before = canonicalize(rootNode);
+  const after = canonicalize(reparsedRoot);
+  return { stable: before === after, before, after, serialized };
+}</span></code></pre>
+  <p>Building this module's own reparse step surfaced a real bug: Track 1 never handles an <em>explicit</em> <code>&lt;tbody&gt;</code> tag (only ever an implied one) — full story, and the additive fix, in <a href="DECISIONS.md">DECISIONS.md</a>.</p>
+</section>
+
+<section class="mod" id="limits">
+  <div class="modhead"><span class="modnum">05</span><h2>Limits — What You Cannot Do Yet</h2></div>
+  <div class="compare">
+    <div class="cant">
+      <h4>Can't do yet</h4>
+      <ul>
+        <li>Automatically FIX an unstable tree — this module only detects instability, matching a real "reject or re-sanitize" decision point, not a repair</li>
+        <li>Handle serialization edge cases beyond this module's own test input (attribute quoting, void elements) — <code>serializer.js</code> is deliberately minimal</li>
+      </ul>
+    </div>
+    <div class="can">
+      <h4>Can do</h4>
+      <ul>
+        <li>Correctly flag a tree assembled via direct DOM mutation as unsafe to serialize and hand off</li>
+        <li>Correctly clear a tree that was always built by legitimate parsing, with zero false positives on this module's test cases</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="mod" id="run">
+  <div class="modhead"><span class="modnum">06</span><h2>Run It</h2></div>
+  <div class="io">
+    <span class="lab">Command</span>
+    <pre><code>cd track2-mxss/04_idempotent_serialization
+node test/demo.js</code></pre>
+    <span class="lab">Expected output (captured verbatim from a real run, abridged)</span>
+    <pre><code>── Case A: a sanitizer "unwrap" step done via direct DOM mutation ──
+Stable (idempotent)? false
+&gt;&gt;&gt; CAUGHT: this tree is unsafe to hand off as a string...
+
+── Case B: a tree built by REAL parsing (no shortcuts) ──
+Stable (idempotent)? true
+&gt;&gt;&gt; No false alarm...
+
+OK — all assertions passed. Track 2 Module T2-04: idempotent serialization defense, verified.</code></pre>
+  </div>
+  <div class="callout watch">
+    <span class="ct">Getting a blank or broken result?</span>
+    <p>If Case B reports unstable, check <code>reparseToDiv</code> is using <code>dispatchReparse</code> (this module's fix for explicit <code>&lt;tbody&gt;</code> tags), not Track 1's <code>dispatch13</code> directly — see DECISIONS.md's bug narrative.</p>
+  </div>
+</section>
+
+<section class="mod" id="brain">
+  <div class="modhead"><span class="modnum">07</span><h2>Brain Exercise</h2></div>
+  <details>
+    <summary>This check catches Case A because reparsing moves the text node. Would it catch an attack where the SECOND parse produces a tree with the exact same SHAPE, but a dangerous attribute value that only appears after some transformation neither parse alone would reveal?</summary>
+    <p>No — and this is a real, important boundary of what this defense covers. <code>canonicalize</code> compares tag names and text/attribute values structurally; if both parses produce identically-shaped trees with identical values, the check reports "stable" correctly, because the two representations genuinely do agree. This defense catches disagreements BETWEEN two representations of the same content — it says nothing about whether a single, self-consistent representation is itself dangerous (that's what T2-01/T2-02/T2-03's specific pattern checks are for, run separately). Idempotent-serialization checking and pattern/allowlist checking are complementary, not substitutes for each other.</p>
+  </details>
+</section>
+
+<section class="mod" id="faq">
+  <div class="modhead"><span class="modnum">08</span><h2>There Are No Dumb Questions</h2></div>
+
+  <details>
+    <summary>Is this actually what real sanitizers like DOMPurify do, or a simplified teaching version?</summary>
+    <p>The core idea — verify that a "cleaned" tree survives a serialize-and-reparse round trip unchanged, and treat instability as a signal to reject or re-sanitize — is the real pattern documented in DOMPurify's own approach and the academic mXSS literature this course cites (<code>REFERENCES.md</code>). This module's implementation is deliberately minimal (a small serializer, a structural diff) to make the mechanism legible, not a claim of feature-parity with a production library.</p>
+  </details>
+
+  <details>
+    <summary>Why does this module's own bug (the explicit &lt;tbody&gt; gap) matter for trusting the defense itself?</summary>
+    <p>Because a defense that produces FALSE POSITIVES on legitimately safe content is nearly as harmful as one that misses real attacks — false positives get "fixed" by developers turning the check off, which then misses everything. Catching and fixing this bug before shipping the module's own DECISIONS.md is the same discipline this course has applied since Module 01's DOCTYPE bug: verify against real output, don't assume the code is right just because it looks right.</p>
+  </details>
+</section>
+
+<section class="mod" id="next">
+  <div class="modhead"><span class="modnum">09</span><h2>What's Next</h2></div>
+  <p>T2-05, the last module of this course, reproduces the tree-shape behavior behind two or three real, publicly disclosed mXSS writeups — grounding everything Track 2 built in documented, historical, real-world cases rather than only this course's own constructed examples.</p>
+</section>
+
+<div class="modnav">
+  <span><span class="dir">Previous</span><a href="../03_whitespace_fusion_vectors/tutorial.html">← T2-03 — Whitespace & fusion vectors</a></span>
+  <span class="next"><span class="dir">Next</span><a href="../05_case_studies/tutorial.html">T2-05 — Case studies from disclosed mXSS bugs →</a></span>
+</div>
+
+<div class="colophon">
+  <h3>Colophon</h3>
+  <p>Source: <code>track2-mxss/04_idempotent_serialization/src/serializer.js</code>, <code>src/idempotency_check.js</code>, <code>src/dispatch_reparse.js</code>. Full rationale, including the explicit-tbody bug: <a href="DECISIONS.md">DECISIONS.md</a>. Terms defined here are logged in the root <a href="../../GLOSSARY.md">GLOSSARY.md</a>. Citations in <a href="../../REFERENCES.md">REFERENCES.md</a>.</p>
+</div>
+
+</div>
+</body>
+</html>
