@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>T2-03 · Whitespace & Fusion Vectors — Foster Parenting course, Track 2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../templates/course.css">
+</head>
+<body>
+<div class="sheet">
+
+<header class="masthead">
+  <p class="eyebrow">Track 2 · Module T2-03 · Defensive / educational</p>
+  <h1>Whitespace &<em>Fusion Vectors</em></h1>
+  <p class="thesis"><code>"java"</code>. <code>"script:alert(1)"</code>. Checked separately, both clean. Combined by nothing more exotic than Track 1 Modules 08 and 09 doing exactly what they were built to do — and never checked again after combining.</p>
+
+  <div class="therule">
+    <span class="lbl">What this module proves</span>
+    <p>A sanitizer that validates text <b>as it arrives</b> — a real, common pattern for streaming or incremental checks — can be hand two chunks that individually pass a <code>javascript:</code>-prefix filter, and end up with a single fused text node reading <span class="hi">exactly <code>"javascript:alert(1)"</code></span>, never re-checked.</p>
+  </div>
+</header>
+
+<section class="mod" id="prereqs">
+  <div class="modhead"><span class="modnum">00</span><h2>Prerequisites</h2></div>
+  <div class="prereqs">
+    <span class="lbl">Read these first if any term below is unfamiliar</span>
+    <a class="tag" href="../../track1-core/08_in_table_text/tutorial.html">Track 1 Module 08 · "in table text" & the whitespace trap</a>
+    <a class="tag" href="../../track1-core/09_text_fusion/tutorial.html">Track 1 Module 09 · Text-node fusion</a>
+  </div>
+</section>
+
+<section class="mod" id="analogy">
+  <div class="modhead"><span class="modnum">01</span><h2>The Big Analogy</h2></div>
+  <div class="analogy">
+    <p>Airport security scans two separate carry-ons, both clear. What nobody checked is what happens after both bags are combined into one, once they're past the checkpoint and repacked together on the other side. Nothing about either bag was hidden or disguised — the combination itself is what the checkpoint's process never had a chance to examine, because the examination happened before the combining did, not after.</p>
+  </div>
+</section>
+
+<section class="mod" id="steps">
+  <div class="modhead"><span class="modnum">02</span><h2>What Happens, Step by Step</h2></div>
+  <div class="spec">
+    <ol>
+      <li><code>"java"</code> is inserted ordinarily into a <code>&lt;div&gt;</code>, before any table exists.</li>
+      <li>A <code>&lt;table&gt;</code> is opened. Current node becomes <code>table</code> — a fostering target (Track 1 Module 04).</li>
+      <li><code>"script:alert(1)"</code> arrives as a run of <code>Character</code> tokens while current node is <code>table</code> — Module 08 buffers it, then flushes it with fostering enabled, since it contains non-whitespace.</li>
+      <li>The flushed run lands, per Module 05's location algorithm, immediately before the table — which is exactly where <code>"java"</code>'s <code>TextNode</code> already sits.</li>
+      <li>Module 09's fusion (unchanged, no special-casing) merges the two into ONE <code>TextNode</code>: <code>"javascript:alert(1)"</code>.</li>
+      <li>A checker validating each chunk AS IT ARRIVED never sees this combined string — only a checker re-run against the final tree does.</li>
+    </ol>
+  </div>
+</section>
+
+<section class="mod" id="map">
+  <div class="modhead"><span class="modnum">03</span><h2>A Map of This Module's State</h2></div>
+  <div class="io">
+    <span class="lab">Two individually-clean chunks</span>
+    <pre><code>chunk 1: "java"              → /^javascript:/i test → false
+chunk 2: "script:alert(1)"    → /^javascript:/i test → false</code></pre>
+    <span class="lab">One fused result, never re-checked</span>
+    <pre><code>div
+  #text "javascript:alert(1)"   ← /^javascript:/i test → TRUE
+  table</code></pre>
+  </div>
+</section>
+
+<section class="mod" id="code">
+  <div class="modhead"><span class="modnum">04</span><h2>The Code, Explained</h2></div>
+  <p>The naive check, and the one that should replace it:</p>
+  <pre><code><span class="c">// what a naive incremental sanitizer does — checks each piece as it shows up:</span>
+function checkChunksIncrementally(chunks, dangerousPattern) {
+  return chunks.map(chunk =&gt; ({ chunk, flagged: dangerousPattern.test(chunk) }));
+}
+
+<span class="c">// what it needs to do instead — check the REAL, FINAL text, after fusion:</span>
+<span class="y">function checkFinalText(finalText, dangerousPattern) {
+  return { text: finalText, flagged: dangerousPattern.test(finalText) };
+}</span></code></pre>
+  <p>Note that neither Module 08 nor Module 09 needed to change at all to produce this outcome — full rationale, including why this module re-verifies against a live browser despite reusing Module 05's already-proven mechanism, is in <a href="DECISIONS.md">DECISIONS.md</a>.</p>
+</section>
+
+<section class="mod" id="limits">
+  <div class="modhead"><span class="modnum">05</span><h2>Limits — What You Cannot Do Yet</h2></div>
+  <div class="compare">
+    <div class="cant">
+      <h4>Can't do yet</h4>
+      <ul>
+        <li>Show this defeating a REAL sanitizer library's incremental-checking code path — this module demonstrates the mechanism on a purpose-built checker</li>
+        <li>Show a defense — that's T2-04, immediately next</li>
+      </ul>
+    </div>
+    <div class="can">
+      <h4>Can do</h4>
+      <ul>
+        <li>Prove two individually-safe text chunks can fuse, via ordinary Track 1 mechanics, into a string a downstream check was specifically built to catch</li>
+        <li>Show this recurs across a different KIND of sanitizer logic (text-content pattern matching) than T2-01/T2-02's tag/attribute checks</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="mod" id="run">
+  <div class="modhead"><span class="modnum">06</span><h2>Run It</h2></div>
+  <div class="io">
+    <span class="lab">Command</span>
+    <pre><code>cd track2-mxss/03_whitespace_fusion_vectors
+node test/demo.js</code></pre>
+    <span class="lab">Expected output (captured verbatim from a real run)</span>
+    <pre><code>  chunk "java" → flagged: false
+  chunk "script:alert(1)" → flagged: false
+
+Neither chunk matches on its own. A per-chunk checker would wave both through.
+
+div
+  #text "javascript:alert(1)"
+  table
+
+Final, actual TextNode data: "javascript:alert(1)"
+Checked against the SAME pattern: flagged = true
+
+OK — all assertions passed. Track 2 Module T2-03: whitespace & fusion vectors, verified.</code></pre>
+  </div>
+  <div class="callout watch">
+    <span class="ct">Getting a blank or broken result?</span>
+    <p>If the final tree shows two separate text nodes instead of one fused node, check that Module 09's <code>tryFuseCharacter</code> is still being consulted — this demo depends on real fusion, not a simulated merge.</p>
+  </div>
+</section>
+
+<section class="mod" id="brain">
+  <div class="modhead"><span class="modnum">07</span><h2>Brain Exercise</h2></div>
+  <details>
+    <summary>Would splitting the dangerous string across THREE chunks instead of two (e.g. "java", "scr", "ipt:alert(1)") make this attack harder to pull off?</summary>
+    <p>Not fundamentally — it would need one more fostering-eligible insertion point (e.g. two separate table-adjacent boundaries) to arrange, but Module 09's fusion accumulates ANY number of consecutive fostered/adjacent text insertions into one node, not just two. The number of chunks is a question of how much markup structure the attacker needs to arrange to create enough separate insertion events; it doesn't change the underlying gap a per-chunk checker has.</p>
+  </details>
+</section>
+
+<section class="mod" id="faq">
+  <div class="modhead"><span class="modnum">08</span><h2>There Are No Dumb Questions</h2></div>
+
+  <details>
+    <summary>Isn't "check text incrementally as it streams in" just a bad design generally — why would a real sanitizer do this?</summary>
+    <p>It's a reasonable design under a very common, very different threat model: validating chunks as they arrive over a network stream, before the whole document is even available, to reject obviously-bad content early and cheaply. That's a legitimate engineering tradeoff for THAT problem. It becomes a security gap specifically when the same incremental check is treated as sufficient FINAL validation, skipping a proper end-of-parse re-check — the mistake isn't building an incremental check, it's not also building the final one.</p>
+  </details>
+
+  <details>
+    <summary>Why is this module's DECISIONS.md careful to re-verify the "javascript:alert(1)" fusion against a real browser, when Module 05 already proved the identical mechanism works for "abcdef"?</summary>
+    <p>Because "the mechanism works for one string" and "the mechanism works for THIS security-relevant string" are different claims this course's own standing rule (never assert unverified behavior) treats as distinct — the string content itself is never part of what makes fusion fire, but re-checking anyway, rather than assuming, is exactly the discipline this whole course has modeled since Module 00's first assertion.</p>
+  </details>
+</section>
+
+<section class="mod" id="next">
+  <div class="modhead"><span class="modnum">09</span><h2>What's Next</h2></div>
+  <p>T2-04 builds the defense every naive checker in T2-01 through T2-03 was missing: an idempotent-serialization check — parse, serialize, reparse, and compare — that catches all three of this module's attacks not by knowing about foster parenting specifically, but by refusing to trust any representation of the tree that isn't the tree itself, checked after a full round trip.</p>
+</section>
+
+<div class="modnav">
+  <span><span class="dir">Previous</span><a href="../02_naive_sanitizer_break/tutorial.html">← T2-02 — Naive sanitizer break</a></span>
+  <span class="next"><span class="dir">Next</span><a href="../04_idempotent_serialization/tutorial.html">T2-04 — Idempotent serialization defense →</a></span>
+</div>
+
+<div class="colophon">
+  <h3>Colophon</h3>
+  <p>Source: <code>track2-mxss/03_whitespace_fusion_vectors/src/incremental_checker.js</code>. Full rationale: <a href="DECISIONS.md">DECISIONS.md</a>. Terms defined here are logged in the root <a href="../../GLOSSARY.md">GLOSSARY.md</a>. Citations in <a href="../../REFERENCES.md">REFERENCES.md</a>.</p>
+</div>
+
+</div>
+</body>
+</html>
