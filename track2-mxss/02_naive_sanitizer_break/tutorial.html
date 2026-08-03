@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>T2-02 · Naive Sanitizer Break — Foster Parenting course, Track 2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../templates/course.css">
+</head>
+<body>
+<div class="sheet">
+
+<header class="masthead">
+  <p class="eyebrow">Track 2 · Module T2-02 · Defensive / educational</p>
+  <h1>Naive Sanitizer<em>Break</em></h1>
+  <p class="thesis">A sanitizer that reasons about SOURCE STRING position instead of the actual parsed tree. Right by accident sometimes. Wrong — completely, silently, attacker-controllably wrong — other times. Same logic, every time.</p>
+
+  <div class="therule">
+    <span class="lbl">What this module proves</span>
+    <p>"This tag is textually between <code>&lt;table&gt;</code> and <code>&lt;/table&gt;</code>, so it must be contained" is <span class="hi">true for <code>&lt;input type=hidden&gt;</code> and false for a plain <code>&lt;img&gt;</code></span> — the exact same reasoning, two opposite outcomes, and the attacker picks which one you get.</p>
+  </div>
+</header>
+
+<section class="mod" id="prereqs">
+  <div class="modhead"><span class="modnum">00</span><h2>Prerequisites</h2></div>
+  <div class="prereqs">
+    <span class="lbl">Read these first if any term below is unfamiliar</span>
+    <a class="tag" href="../01_what_mxss_is/tutorial.html">T2-01 · What mXSS actually is</a>
+    <a class="tag" href="../../track1-core/07_what_refuses/tutorial.html">Track 1 Module 07 · What refuses to be fostered</a>
+  </div>
+</section>
+
+<section class="mod" id="analogy">
+  <div class="modhead"><span class="modnum">01</span><h2>The Big Analogy</h2></div>
+  <div class="analogy">
+    <p>A mailroom clerk decides which packages are "internal, already-screened mail" by checking whether the sender wrote "Building B" somewhere in the packing slip — never opening the box, never checking where the package actually got routed once it entered the building. Most of the time this correlates with something true. It is not, itself, a fact about where the package ends up. A clerk relying on it is trusting the SENDER's claim, not the BUILDING's actual routing — and the sender is exactly who you can't trust.</p>
+  </div>
+</section>
+
+<section class="mod" id="steps">
+  <div class="modhead"><span class="modnum">02</span><h2>What Happens, Step by Step</h2></div>
+  <div class="spec">
+    <ol>
+      <li><code>isTrustedBySourcePosition(html, tagIndex)</code> finds <code>&lt;table&gt;</code> and <code>&lt;/table&gt;</code> in the raw string and checks whether a given tag's string index falls between them.</li>
+      <li><code>scanWithNaiveHeuristic</code> regex-scans for tags carrying a (stand-in) dangerous attribute and reports which the heuristic would trust.</li>
+      <li>Case A: a plain <code>&lt;img&gt;</code> — the heuristic trusts it (it's textually inside the table tags). Track 1's real engine shows it actually fosters OUTSIDE the table (Module 06's established behavior).</li>
+      <li>Case B: an <code>&lt;input type=hidden&gt;</code> — the SAME heuristic trusts it, for the same reason. This time the real engine shows it genuinely DOES stay inside (Module 07's established behavior).</li>
+      <li>Conclusion: the heuristic's correctness depends entirely on which of Track 1's element-specific rules the attacker's chosen tag happens to fall under — not on anything the heuristic itself understands.</li>
+    </ol>
+  </div>
+</section>
+
+<section class="mod" id="map">
+  <div class="modhead"><span class="modnum">03</span><h2>A Map of This Module's State</h2></div>
+  <div class="tblwrap">
+  <table>
+    <thead><tr><th>Input tag</th><th>Heuristic says</th><th>Reality (Track 1, verified)</th><th>Heuristic was...</th></tr></thead>
+    <tbody>
+      <tr><td><code>&lt;img&gt;</code></td><td class="yes">trusted</td><td>fostered OUTSIDE the table</td><td class="yes" style="color:var(--stamp)">WRONG</td></tr>
+      <tr><td><code>&lt;input type=hidden&gt;</code></td><td class="yes">trusted</td><td>stays INSIDE the table</td><td class="no">right, by accident</td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<section class="mod" id="code">
+  <div class="modhead"><span class="modnum">04</span><h2>The Code, Explained</h2></div>
+  <p>The entire naive heuristic:</p>
+  <pre><code><span class="c">function isTrustedBySourcePosition(html, tagIndex) {
+  const tableStart = html.indexOf('&lt;table');
+  const tableEnd = html.indexOf('&lt;/table&gt;');</span>
+  <span class="y">return tagIndex &gt; tableStart &amp;&amp; tagIndex &lt; tableEnd;</span><span class="c">
+}</span></code></pre>
+  <p>Note what it never does: parse anything, ask what the current node will be, or consult Module 04's five-element list or Module 07's explicitly-handled-cases table. It's a fact about a string, presented as if it were a fact about a tree. Full rationale, including why Case B is essential to this module's argument (not just a second bug), is in <a href="DECISIONS.md">DECISIONS.md</a>.</p>
+</section>
+
+<section class="mod" id="limits">
+  <div class="modhead"><span class="modnum">05</span><h2>Limits — What You Cannot Do Yet</h2></div>
+  <div class="compare">
+    <div class="cant">
+      <h4>Can't do yet</h4>
+      <ul>
+        <li>Break a sanitizer that actually parses and fully walks the real DOM (that resists exactly this attack — see T2-01's brain exercise)</li>
+        <li>Handle the whitespace/text-fusion-specific variant of this attack — that's T2-03</li>
+      </ul>
+    </div>
+    <div class="can">
+      <h4>Can do</h4>
+      <ul>
+        <li>Show a concrete, real, historically-plausible naive heuristic failing in an attacker-controllable, data-dependent way</li>
+        <li>Show the SAME reasoning succeeding on a different input, proving the failure isn't a one-off bug but a structural absence of any real guarantee</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="mod" id="run">
+  <div class="modhead"><span class="modnum">06</span><h2>Run It</h2></div>
+  <div class="io">
+    <span class="lab">Command</span>
+    <pre><code>cd track2-mxss/02_naive_sanitizer_break
+node test/demo.js</code></pre>
+    <span class="lab">Expected output (captured verbatim from a real run, abridged)</span>
+    <pre><code>── Case A: a plain &lt;img&gt; — the naive heuristic trusts it, reality disagrees ──
+Naive heuristic scan: img → trusted=true
+Actual final tree (this course's own verified Track 1 engine):
+body
+  img [src=x,data-dangerous=focus-steal]
+  table
+&gt;&gt;&gt; ... The heuristic was WRONG.
+
+── Case B: an &lt;input type=hidden&gt; — the SAME heuristic, and this time it happens to be right ──
+Naive heuristic scan: input → trusted=true
+Actual final tree:
+body
+  table
+    input [type=hidden,data-dangerous=hidden-but-inert]
+&gt;&gt;&gt; This time the heuristic happened to be right...
+
+OK — all assertions passed. Track 2 Module T2-02: naive sanitizer break, verified.</code></pre>
+  </div>
+  <div class="callout watch">
+    <span class="ct">Getting a blank or broken result?</span>
+    <p>If Case A's real tree shows <code>img</code> still inside <code>table</code>, check you're running Track 1's actual <code>dispatch13</code> — this module depends on Module 06's real, verified fostering behavior, not a simulated stand-in.</p>
+  </div>
+</section>
+
+<section class="mod" id="brain">
+  <div class="modhead"><span class="modnum">07</span><h2>Brain Exercise</h2></div>
+  <details>
+    <summary>Could the naive heuristic be "fixed" by adding a special case for every tag Module 07 says refuses to foster (style, script, template, hidden input, form)?</summary>
+    <p>That would make Case B's correctness principled instead of accidental — but it wouldn't fix the underlying design flaw, only patch this specific symptom. The heuristic would still be reasoning about SOURCE POSITION rather than the actual tree, and Track 1's later modules (10's reconstruction, 11's template-content redirection) show there are element-creation paths — a formatting element re-created by reconstruction, content redirected into a template's `.content` — where "textually between two tags" and "structurally contained by them" diverge in even more ways than the plain fostering case this module demonstrates. Patching known cases one at a time is exactly the losing game T2-04's defense (verify the REAL tree, not assumptions about it) is built to avoid entirely.</p>
+  </details>
+</section>
+
+<section class="mod" id="faq">
+  <div class="modhead"><span class="modnum">08</span><h2>There Are No Dumb Questions</h2></div>
+
+  <details>
+    <summary>Is a source-position heuristic like this a realistic thing anyone would actually build, or a strawman?</summary>
+    <p>Realistic — string-based HTML manipulation predates widespread DOM-based sanitization by years, and ad hoc "is this substring inside that tag" logic still shows up in template engines, log scrubbers, and hand-rolled content filters that were never designed with an adversarial parser-behavior model in mind. The specific heuristic here is constructed for this course, but the CLASS of mistake — trusting source-text position as a proxy for tree structure — is exactly the mistake Heiderich et al.'s original mXSS research (cited in <code>REFERENCES.md</code>) documented in real, shipped sanitizers.</p>
+  </details>
+
+  <details>
+    <summary>Why does this module reuse Module 06 and Module 07's already-verified tree shapes instead of re-checking them against a live browser again here?</summary>
+    <p>Because this module isn't making a new claim about tree shape — Track 1 already established, and verified, exactly where `<img>` and `<input type=hidden>` end up in a table. This module's new claim is entirely about the SANITIZER's behavior: does its heuristic agree with those already-established facts? Re-verifying the tree shape again here would test something already tested; DECISIONS.md points back to exactly where each reused fact came from.</p>
+  </details>
+</section>
+
+<section class="mod" id="next">
+  <div class="modhead"><span class="modnum">09</span><h2>What's Next</h2></div>
+  <p>T2-03 turns to Module 08's whitespace-buffering behavior specifically: a sanitizer that scans for "meaningful" (non-whitespace) content between tags can be shown a payload where the dangerous character is surrounded by whitespace that travels with it during fostering — testing whether a sanitizer's own text-handling assumptions survive contact with the same all-or-nothing buffering rule Module 08 built.</p>
+</section>
+
+<div class="modnav">
+  <span><span class="dir">Previous</span><a href="../01_what_mxss_is/tutorial.html">← T2-01 — What mXSS actually is</a></span>
+  <span class="next"><span class="dir">Next</span><a href="../03_whitespace_fusion_vectors/tutorial.html">T2-03 — Whitespace & fusion vectors →</a></span>
+</div>
+
+<div class="colophon">
+  <h3>Colophon</h3>
+  <p>Source: <code>track2-mxss/02_naive_sanitizer_break/src/source_position_sanitizer.js</code>. Full rationale: <a href="DECISIONS.md">DECISIONS.md</a>. Terms defined here are logged in the root <a href="../../GLOSSARY.md">GLOSSARY.md</a>. Citations in <a href="../../REFERENCES.md">REFERENCES.md</a>.</p>
+</div>
+
+</div>
+</body>
+</html>
