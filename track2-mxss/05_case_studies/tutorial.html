@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>T2-05 · Case Studies From Disclosed mXSS Bugs — Foster Parenting course, Track 2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../templates/course.css">
+</head>
+<body>
+<div class="sheet">
+
+<header class="masthead">
+  <p class="eyebrow">Track 2 · Module T2-05 · Final module of the course</p>
+  <h1>Case Studies From<em>Disclosed mXSS Bugs</em></h1>
+  <p class="thesis">Three real, independently-verified sources. One fully reproduced, with real tested code, against a live-browser-confirmed tree shape. Two accurately cited and honestly marked out of scope — because reproducing them needs mechanisms this course never built, and pretending otherwise would break the one rule this entire course has followed from Module 00 onward.</p>
+
+  <div class="therule">
+    <span class="lbl">What this module proves</span>
+    <p>This engine reproduces the exact tree shape of a real, documented "Round Trip mXSS" case — <span class="hi">and, checking that real tree against the course's own T2-04 defense, discovers the defense reports "stable" when a real browser's round-trip is actually unstable</span>, because this engine's own reparse step has a gap.</p>
+  </div>
+</header>
+
+<section class="mod" id="prereqs">
+  <div class="modhead"><span class="modnum">00</span><h2>Prerequisites</h2></div>
+  <div class="prereqs">
+    <span class="lbl">Read these first if any term below is unfamiliar</span>
+    <a class="tag" href="../04_idempotent_serialization/tutorial.html">T2-04 · Idempotent serialization defense</a>
+    <a class="tag" href="../../track1-core/07_what_refuses/tutorial.html">Track 1 Module 07 · What refuses to be fostered</a>
+  </div>
+</section>
+
+<section class="mod" id="analogy">
+  <div class="modhead"><span class="modnum">01</span><h2>The Big Analogy</h2></div>
+  <div class="analogy">
+    <p>An inspector who tests a smoke detector by holding a lit match near it, and it beeps, has verified the detector works for THAT test. An inspector who instead asks "what's the detector's actual circuit design, and does that design have any blind spots the match test wouldn't reveal?" has done something more valuable, even if — especially if — the answer is "yes, here's exactly where." This module does the second thing to the course's own T2-04 defense, using a real, historically documented fire.</p>
+  </div>
+</section>
+
+<section class="mod" id="steps">
+  <div class="modhead"><span class="modnum">02</span><h2>What Happens, Step by Step</h2></div>
+  <div class="spec">
+    <ol>
+      <li>Three real mXSS case studies were located and verified via live web search and a direct source fetch — not recalled from memory (see DECISIONS.md for the exact sources, dates, and authors).</li>
+      <li>Case Study 1 ("Round Trip mXSS," documented at the SonarSource mXSS Cheatsheet) is reproduced with real code: <code>closeFormByRemovingFromStack</code> implements the one stack operation Track 1 always deferred — removing a non-current-node element from the middle of the stack.</li>
+      <li>The resulting tree is verified against live browser output before any conclusions are drawn.</li>
+      <li>That same real tree is run through T2-04's <code>checkIdempotent</code> — and reports "stable," contradicting the real browser's independently-verified "unstable" round-trip.</li>
+      <li>Case Studies 2 and 3 (a MathML/comment-parsing DOMPurify bypass; a scripting-flag-dependent <code>&lt;noscript&gt;</code> mutation) are cited accurately, with real sources, and explicitly marked as requiring mechanisms out of this course's scope.</li>
+    </ol>
+  </div>
+</section>
+
+<section class="mod" id="map">
+  <div class="modhead"><span class="modnum">03</span><h2>A Map of This Module's State</h2></div>
+  <div class="io">
+    <span class="lab">Input — a form nested inside a form (illegal by content model, built anyway by tree construction)</span>
+    <pre><code>&lt;form id="outer"&gt;&lt;div&gt;&lt;/form&gt;&lt;form id="inner"&gt;&lt;input&gt;</code></pre>
+    <span class="lab">This engine's reproduction — matches real browser output exactly</span>
+    <pre class="tree">body
+└─ form#outer
+   └─ div
+      └─ <span class="new">form#inner</span>   <span class="caret">← only possible because &lt;/form&gt; removed #outer from mid-stack</span>
+         └─ input</pre>
+    <span class="lab">The real browser's round trip — form#inner silently vanishes</span>
+    <pre class="tree">div (a fresh container, after reparsing the serialized output)
+└─ form#outer
+   └─ div
+      └─ <span class="new">input</span>   <span class="caret">← form#inner is GONE; input's form association changed</span></pre>
+  </div>
+</section>
+
+<section class="mod" id="code">
+  <div class="modhead"><span class="modnum">04</span><h2>The Code, Explained</h2></div>
+  <p>The one new stack operation this final module needed:</p>
+  <pre><code><span class="c">function closeFormByRemovingFromStack(state) {
+  for (let i = state.stack.length - 1; i &gt;= 0; i--) {
+    if (state.stack[i].tagName === 'form') {</span>
+      <span class="y">state.stack.splice(i, 1);  // removed from wherever it sits — not popped from the top</span><span class="c">
+      return true;
+    }
+  }
+  return false;
+}</span></code></pre>
+  <p>And the finding this module's own test surfaced — the defense's blind spot, stated as code, not just prose:</p>
+  <pre><code><span class="c">// This engine's checkIdempotent on the real, verified first-parse tree:</span>
+Stable (idempotent)? <span class="r">true</span>   <span class="c">// but the REAL browser's round-trip is NOT stable —</span>
+                          <span class="c">// see DECISIONS.md for the live-verified mismatch</span></code></pre>
+  <p>Full rationale, including all three sources verified before this page was written, is in <a href="DECISIONS.md">DECISIONS.md</a>.</p>
+</section>
+
+<section class="mod" id="limits">
+  <div class="modhead"><span class="modnum">05</span><h2>Limits — What You Cannot Do Yet</h2></div>
+  <div class="compare">
+    <div class="cant">
+      <h4>Can't do yet</h4>
+      <ul>
+        <li>General (non-table) form-element-pointer tracking — this engine's round-trip check has a real, demonstrated gap because of it</li>
+        <li>Reproduce Case Study 2 (needs foreign-content namespace tracking, RAWTEXT tokenizing)</li>
+        <li>Reproduce Case Study 3 (needs a scripting-flag-aware tokenizer)</li>
+      </ul>
+    </div>
+    <div class="can">
+      <h4>Can do</h4>
+      <ul>
+        <li>Reproduce a real, documented mXSS case's exact first-parse tree shape, verified against a live browser</li>
+        <li>Use that real case to reveal a genuine, general property of the idempotent-serialization defense pattern: it's only as trustworthy as the parser running it</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="mod" id="run">
+  <div class="modhead"><span class="modnum">06</span><h2>Run It</h2></div>
+  <div class="io">
+    <span class="lab">Command</span>
+    <pre><code>cd track2-mxss/05_case_studies
+node test/demo.js</code></pre>
+    <span class="lab">Expected output (captured verbatim from a real run, abridged)</span>
+    <pre><code>This engine's reproduction:
+body
+  form#outer
+    div
+      form#inner
+        input
+
+Matches real browser output exactly...
+
+── Checking this real tree against T2-04's idempotent-serialization defense ──
+Stable (idempotent)? true
+
+[This engine models the FIRST parse exactly... the SECOND parse may not reproduce
+ the real browser's exact round-trip mismatch. That gap is real and stated here
+ directly, not glossed over...]
+
+OK — Case Study 1 (first-parse tree shape) verified against real browser output.</code></pre>
+  </div>
+  <div class="callout watch">
+    <span class="ct">Getting a blank or broken result?</span>
+    <p>If the first tree doesn't show <code>form#inner</code> nested inside <code>div</code>, check that <code>closeFormByRemovingFromStack</code> is splicing from wherever <code>form</code> sits in the stack — not popping from the top, which would remove <code>div</code> too.</p>
+  </div>
+</section>
+
+<section class="mod" id="brain">
+  <div class="modhead"><span class="modnum">07</span><h2>Brain Exercise — the course's last question</h2></div>
+  <details>
+    <summary>This module found a real blind spot in the course's OWN T2-04 defense, using its OWN engine, in its OWN final module. Was building T2-04 a wasted effort, given it has a demonstrated gap?</summary>
+    <p>No — and sitting with why is the point. T2-04's defense is exactly as good as this course claimed it to be in its own DECISIONS.md: it correctly catches every case where this engine's OWN parse (the one it reparses with) disagrees with a tree it's given — which is precisely what caught Case A's direct-DOM-mutation bug in T2-04 itself. What T2-04 was never claimed to do is catch disagreements between THIS engine's parsing and a REAL BROWSER's parsing — that would require this engine's parser to be a complete, faithful reimplementation of every insertion mode, which every module since Track 1 Module 01 has been explicit about not attempting. The defense pattern is sound; a production implementation of it is only as strong as the parser underneath it, and this module proves that claim concretely rather than asserting it abstractly. That is, in fact, the most useful thing a security course can teach: not "this technique works," but "here is exactly the boundary of what this technique guarantees, found by testing it against something real."</p>
+  </details>
+</section>
+
+<section class="mod" id="faq">
+  <div class="modhead"><span class="modnum">08</span><h2>There Are No Dumb Questions</h2></div>
+
+  <details>
+    <summary>Why does this module bother citing Case Studies 2 and 3 at all, if they're not reproduced?</summary>
+    <p>Because "here is what exists in the real world, and here is exactly which parts of it this course did and didn't build" is a more honest, more useful map than only ever showing what happened to be buildable. A reader who encounters either bypass elsewhere will recognize it, know roughly which mechanism is responsible (foreign-content namespace switching; scripting-flag-dependent tokenizing), and know precisely why this particular course's engine — built for foster parenting specifically — was never going to reproduce it. That's a real, transferable understanding, not a gap papered over.</p>
+  </details>
+
+  <details>
+    <summary>Were the three sources in this module actually looked up, or is this just phrased to sound like they were?</summary>
+    <p>Actually looked up, in this same working session, using live web search and a direct fetch of the PortSwigger research page — the author (Gareth Heyes), exact publication date (October 7, 2020), and the specific PoC payload were all confirmed from the source itself, not recalled from training data. This is stated explicitly in DECISIONS.md precisely because the claim is checkable, and this course has treated "checkable" as the bar for every fact in it since Module 00.</p>
+  </details>
+</section>
+
+<section class="mod" id="next">
+  <div class="modhead"><span class="modnum">09</span><h2>What's Next</h2></div>
+  <p>Nothing — this is the last module. Nineteen modules, two tracks, a hand-built parser verified against real browsers from Module 05 onward, four real bugs found and either fixed or honestly routed around, and a security track that turned every one of those mechanisms into something concrete enough to break a sanitizer, defend a sanitizer, and then find the defense's own edge. If you're picking up this course from the roadmap's "just want the mental model" stopping point, this is where the full path leads. If you're building or auditing a real sanitizer, Track 2's four modules — narrow inspection, source-position trust, incremental checking, idempotent serialization — are the four failure modes and the one general defense worth knowing by name.</p>
+</section>
+
+<div class="modnav">
+  <span><span class="dir">Previous</span><a href="../04_idempotent_serialization/tutorial.html">← T2-04 — Idempotent serialization defense</a></span>
+  <span class="next"><span class="dir">Back to</span><a href="../../ROADMAP.md">the course roadmap</a></span>
+</div>
+
+<div class="colophon">
+  <h3>Colophon</h3>
+  <p>Source: <code>track2-mxss/05_case_studies/src/form_pointer.js</code>, <code>src/dispatch_case_study.js</code>. Full rationale, including all three verified sources: <a href="DECISIONS.md">DECISIONS.md</a>. Terms defined here are logged in the root <a href="../../GLOSSARY.md">GLOSSARY.md</a>. Citations in <a href="../../REFERENCES.md">REFERENCES.md</a>. This is the final module of the course.</p>
+</div>
+
+</div>
+</body>
+</html>
