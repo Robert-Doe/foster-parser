@@ -1,0 +1,20 @@
+# Node
+node_modules/
+
+# Editors / tooling
+.idea/
+.claude/
+
+# Logs
+*.log
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Office lock/temp files (e.g. ~$Filename.docx left by an open Word session)
+~$*
+
+# Reference architecture docs kept as PDF only — see README "A note on
+# the reference documents" for why the .docx sources are not tracked.
+*.docx
