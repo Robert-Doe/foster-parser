@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>P3 · Stack of open elements — Foster Parenting course prerequisites</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../templates/course.css">
+</head>
+<body>
+<div class="sheet">
+
+<header class="masthead">
+  <p class="eyebrow">Prerequisite P3</p>
+  <h1>The stack of<em>open elements</em></h1>
+  <p class="thesis">One mutable list the whole parser shares. Almost every algorithm in this course — foster parenting included — is really a query or an edit against this one structure.</p>
+</header>
+
+<section class="mod">
+  <div class="modhead"><span class="modnum">P3</span><h2>What it is and why it grows downward</h2></div>
+
+  <div class="analogy">
+    <p>Picture a pile of trays in a cafeteria return — you can only take from the top, and the tray on top is whatever was placed there most recently. The stack of open elements is exactly that: elements go on top when their start tag is processed and come off the top when they're properly closed. The tray on top is called the <strong>current node</strong>, and it's the single most-queried value in the entire tree-construction algorithm.</p>
+  </div>
+
+  <div class="spec">
+    <p>The stack starts empty and gets an <code>html</code> element pushed first. From there:</p>
+    <ul>
+      <li><strong>Push</strong> — "insert an HTML element" always pushes the new element after inserting it into the tree.</li>
+      <li><strong>Pop</strong> — a matching end tag (in the simple case) pops the current node.</li>
+      <li><strong>Current node</strong> — the bottommost (most recently pushed, least recently popped) entry. This is exactly the <var>target</var> that Module 02's two-condition check inspects.</li>
+      <li><strong>Not the same as tree ancestry</strong> — the stack reflects <em>parsing history</em>, not DOM structure. An element can be popped off the stack while its DOM node still has children added later via other means (Module 09 in the attached reference file shows a table popped off the stack while still receiving appends through a stale reference).</li>
+    </ul>
+  </div>
+
+  <h3>Reading a stack diagram in this course</h3>
+  <p>Every module that shows a stack draws it top-to-bottom as <em>oldest → newest</em>, with the current node last:</p>
+  <div class="rail">
+    <div class="railbox">
+      <h4>Stack of open elements ↓</h4>
+      <ol class="stk">
+        <li><span>html</span></li>
+        <li><span>body</span></li>
+        <li><span>table</span></li>
+        <li class="tgt"><span>tbody</span><span class="note">current node</span></li>
+      </ol>
+    </div>
+    <div class="railbox">
+      <h4>What that means</h4>
+      <p style="margin:0">The parser just finished processing a <code>&lt;tbody&gt;</code> (or an implied one) and hasn't yet processed anything that would push or pop further. Any token arriving right now is dispatched against whatever insertion mode is active, with <code>tbody</code> as the current node.</p>
+    </div>
+  </div>
+
+  <h3>What our engine's stack looks like</h3>
+  <pre><code><span class="c">// a plain array; push()/pop() are the actual operations —
+// no wrapper class needed, current node is just stack[stack.length - 1]</span>
+const openElements = [];
+<span class="c">const currentNode = () => openElements[openElements.length - 1];</span></code></pre>
+
+  <div class="callout brain">
+    <span class="ct">Brain power</span>
+    <p>Foster parenting's condition 2 (Module 02) reads "target is a table/tbody/tfoot/thead/tr element." Now that you've seen the stack, restate that condition in terms of it: is it asking about the stack's <em>contents</em>, or specifically its <em>top</em>? Hold the answer until Module 02 — getting this distinction right is most of the module.</p>
+  </div>
+</section>
+
+<div class="modnav">
+  <span><span class="dir">Previous</span><a href="prereq_dom_node_shape.html">← P2 — The DOM node shape</a></span>
+  <span class="next"><span class="dir">Next</span><a href="prereq_insertion_modes.html">P4 — Insertion modes →</a></span>
+</div>
+
+</div>
+</body>
+</html>

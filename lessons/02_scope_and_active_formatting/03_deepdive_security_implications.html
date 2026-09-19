@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Deep Dive · Security Implications — Foster Parenting course</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../templates/course.css">
+</head>
+<body>
+<div class="sheet">
+
+<header class="masthead">
+  <p class="eyebrow">Cluster 02 · Deep dive 2 of 2 · Where Track 1 stops and Track 2 begins</p>
+  <h1>Security<em>Implications</em></h1>
+  <p class="thesis">Everything in this deep dive is a preview, not a claim this course has verified yet — Track 2 is where these ideas get built, tested, and checked against real sanitizer behavior. This page exists to name <em>why</em> Track 2 exists at all.</p>
+</header>
+
+<section class="mod">
+  <div class="modhead"><span class="modnum">01</span><h2>The Big Analogy</h2></div>
+  <div class="analogy">
+    <p>A sanitizer that removes a <code>&lt;script&gt;</code> tag by scanning the SOURCE STRING for it, then re-serializes what's left, is trusting that the tree it scanned and the tree a browser will eventually build from its OUTPUT are the same tree. Every module in Track 1 is a catalog of ways that assumption can be false — not because the sanitizer author made an arithmetic mistake, but because tree construction has more relocation tactics (Module 12's atlas) than casual intuition accounts for, and every one of them can change which element ends up as the parent of attacker-controlled content.</p>
+  </div>
+</section>
+
+<section class="mod">
+  <div class="modhead"><span class="modnum">02</span><h2>The Mechanism — three concrete seams, named plainly</h2></div>
+  <div class="spec">
+    <p><strong>Seam 1 — foster parenting reshapes ancestry (Modules 02–09).</strong> A sanitizer that allow-lists "content inside a <code>&lt;td&gt;</code> is safe because a <code>&lt;table&gt;</code> can't execute anything" is reasoning about markup BEFORE parsing. After parsing, content the author thought was safely trapped inside table structure may be sitting OUTSIDE it entirely, as a sibling of the table, in whatever element happened to be its parent before the table was opened — a completely different, possibly unvalidated, context.</p>
+    <p><strong>Seam 2 — reconstruction duplicates elements silently (Module 10).</strong> A sanitizer that counts occurrences of a tag in the source, or that assumes "one <code>&lt;b&gt;</code> tag, one <code>&lt;b&gt;</code> element" as an invariant for some later transformation, can be handed a tree with MORE elements of that tag than the source ever wrote — each one independently a target for attribute-based attacks (an event handler attribute, for instance) if the sanitizer's per-element checks aren't re-run against every reconstructed copy.</p>
+    <p><strong>Seam 3 — scope silently drops end tags (Module 13).</strong> A sanitizer's own bookkeeping (e.g. a stack it maintains itself, tracking "am I currently inside an allowed context") can drift out of sync with the REAL parser's stack if it doesn't independently implement scope's wall behavior — an end tag the sanitizer's bookkeeping thinks closes something may be silently ignored by the actual parser, leaving the sanitizer's model of "what's currently open" wrong for everything that follows.</p>
+  </div>
+  <div class="callout crazy">
+    <span class="ct">The through-line to mXSS</span>
+    <p>Mutation XSS (mXSS) — Track 2's actual subject — is precisely the class of bug that lives in these seams: a payload that is inert, or looks inert, in one representation (the string a sanitizer scanned) but becomes live once a browser's real tree-construction algorithm — the one this course spent thirteen modules building a working model of — gets to reparse it. None of Track 1's modules were built AS attacks; they're the parser behaving exactly as specified. mXSS is what happens when a security boundary is drawn using an approximate mental model of that same, correctly-specified behavior.</p>
+  </div>
+</section>
+
+<section class="mod">
+  <div class="modhead"><span class="modnum">03</span><h2>Limits — what this page does NOT claim</h2></div>
+  <div class="compare">
+    <div class="cant">
+      <h4>Not claimed here</h4>
+      <ul>
+        <li>That any specific sanitizer library has any specific vulnerability — no library is named or tested on this page</li>
+        <li>That Track 1's engine has been used to construct a working exploit — that's Track 2's job, with real code and real verification</li>
+      </ul>
+    </div>
+    <div class="can">
+      <h4>Claimed here</h4>
+      <ul>
+        <li>That the three seams named above are real, general mechanisms this course's own Track 1 modules built and verified against real browsers</li>
+        <li>That they are the right shape of thing to worry about when reasoning about sanitizer correctness — which is exactly the hypothesis Track 2 tests directly</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<div class="modnav">
+  <span><span class="dir">Previous</span><a href="02_deepdive_noahs_ark.html">← Deep dive: the Noah's Ark clause</a></span>
+  <span class="next"><span class="dir">Next</span><a href="../../track2-mxss/01_what_mxss_is/tutorial.html">Track 2, Module T2-01: What mXSS actually is →</a></span>
+</div>
+
+<div class="colophon">
+  <h3>Colophon</h3>
+  <p>Part of the <a href="../README.md">lessons/ cluster set</a>. This page is a bridge to Track 2 — every specific claim it previews is built and verified there, not here.</p>
+</div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prerequisites — Foster Parenting course</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../templates/course.css">
+</head>
+<body>
+<div class="sheet">
+
+<header class="masthead">
+  <p class="eyebrow">Foster Parenting course · Prerequisites layer</p>
+  <h1>Before <em>Module 00</em></h1>
+  <p class="thesis">Five primitives every module in this course assumes without re-explaining. Skim them now, or jump back to any one of them from a module's tag-links when you hit a term you don't recognize.</p>
+
+  <div class="therule">
+    <span class="lbl">Why these five, and not the whole spec</span>
+    <p>Every Track 1 module is about <span class="hi">one specific decision</span> the tree-construction algorithm makes. These five pages are the shared vocabulary and shared data structures that decision is expressed in terms of. Nothing here is foster-parenting-specific — foster parenting doesn't show up until Module 02.</p>
+  </div>
+
+  <ol class="toc">
+    <li><span class="n">P1</span><a href="prereq_tokens.html">Tokens — the five shapes a tokenizer emits</a></li>
+    <li><span class="n">P2</span><a href="prereq_dom_node_shape.html">The DOM node shape our engine builds</a></li>
+    <li><span class="n">P3</span><a href="prereq_stack_of_open_elements.html">The stack of open elements</a></li>
+    <li><span class="n">P4</span><a href="prereq_insertion_modes.html">Insertion modes — the "states" you asked about</a></li>
+    <li><span class="n">P5</span><a href="prereq_appropriate_place.html">"Appropriate place for inserting a node" — the one chokepoint</a></li>
+  </ol>
+</header>
+
+<section class="mod">
+  <div class="modhead"><span class="modnum">→</span><h2>Reading order</h2></div>
+  <p>P1 and P2 are pure data structures — read them in either order. P3 depends on both (the stack holds nodes, popped and pushed in response to tokens). P4 depends on P3 (an insertion mode is a dispatch table keyed by token, that mutates the stack). P5 depends on all four — it's the algorithm every Track 1 module from 02 onward is really about, and it's stated in terms of the stack (P3) and the mode the parser is in (P4).</p>
+  <p>If you already know HTML parsing internals, skip straight to <a href="../track1-core/00_tokens_and_nodes/tutorial.html">Module 00</a> and come back here only when a tag-link sends you.</p>
+</section>
+
+<div class="colophon">
+  <h3>Colophon</h3>
+  <p>Definitions here are simplified restatements of WHATWG HTML Standard §13.2 (Parsing HTML documents) scoped to what this course's engine actually implements — see each Track 1 module's <code>DECISIONS.md</code> for exactly where our engine's behavior narrows the full spec.</p>
+</div>
+
+</div>
+</body>
+</html>

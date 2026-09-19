@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>P2 · DOM node shape — Foster Parenting course prerequisites</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../templates/course.css">
+</head>
+<body>
+<div class="sheet">
+
+<header class="masthead">
+  <p class="eyebrow">Prerequisite P2</p>
+  <h1>The DOM<em>node shape</em></h1>
+  <p class="thesis">Tree construction's whole job is: consume a token (P1), produce or move <b>one of four node kinds</b>. Our engine implements exactly these four — nothing from CSSOM, nothing from layout.</p>
+</header>
+
+<section class="mod">
+  <div class="modhead"><span class="modnum">P2</span><h2>Four node kinds, one parent pointer</h2></div>
+
+  <div class="analogy">
+    <p>A real browser's DOM node supports hundreds of properties — <code>style</code>, <code>getBoundingClientRect</code>, event listeners. None of that exists at the layer this course lives in. Tree construction only cares about four things a node can be, and one relationship: who is my parent, and in what order am I among my siblings.</p>
+  </div>
+
+  <div class="spec">
+    <ol>
+      <li><strong>Document</strong> — the root. Exactly one per tree, holds a single <code>documentElement</code> child once <code>&lt;html&gt;</code> is inserted.</li>
+      <li><strong>Element</strong> — has a tag name, an attribute map, and an ordered list of children. This is the only node kind foster parenting ever relocates as a whole subtree.</li>
+      <li><strong>Text</strong> — has a single string <code>data</code> property and no children. Module 09 (text fusion) is entirely about when two character tokens produce one Text node instead of two.</li>
+      <li><strong>Comment</strong> — has a single string <code>data</code> property, structurally identical to Text but never merges with a sibling comment and is never fostered specially (Module 05's table shows comments are inserted normally even from "in table").</li>
+    </ol>
+    <p>Every node (except Document) has exactly one parent at a time. "Insert a node" always means: compute a location (P5), then splice the node into that location's parent's child list. Foster parenting is unusual only in <em>which</em> parent that computed location names — the splice operation itself is the same one every insertion uses.</p>
+  </div>
+
+  <h3>What our engine's node objects look like</h3>
+  <pre><code><span class="c">// track1-core/00_tokens_and_nodes/src/nodes.js — the whole vocabulary</span>
+class Node { parent = null; }
+
+class DocumentNode extends Node { children = []; }
+
+class ElementNode extends Node {
+  constructor(tagName) {
+    super();
+    this.tagName = tagName;
+    this.attrs = new Map();
+    this.children = [];
+  }
+}
+
+class TextNode extends Node {
+  constructor(data) { super(); this.data = data; }
+}
+
+class CommentNode extends Node {
+  constructor(data) { super(); this.data = data; }
+}</code></pre>
+
+  <div class="callout watch">
+    <span class="ct">Watch it</span>
+    <p>Real DOM <code>Node.parentNode</code> and <code>Node.childNodes</code> are live, bidirectional, and mutation-observable. Our nodes are plain objects with a one-way <code>parent</code> pointer set manually wherever we splice — enough to answer "what is this node's ancestor chain" (needed for scope, P4/Module 13) without implementing the full DOM API surface.</p>
+  </div>
+</section>
+
+<div class="modnav">
+  <span><span class="dir">Previous</span><a href="prereq_tokens.html">← P1 — Tokens</a></span>
+  <span class="next"><span class="dir">Next</span><a href="prereq_stack_of_open_elements.html">P3 — The stack of open elements →</a></span>
+</div>
+
+</div>
+</body>
+</html>

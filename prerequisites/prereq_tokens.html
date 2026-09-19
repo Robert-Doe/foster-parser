@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>P1 · Tokens — Foster Parenting course prerequisites</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../templates/course.css">
+</head>
+<body>
+<div class="sheet">
+
+<header class="masthead">
+  <p class="eyebrow">Prerequisite P1</p>
+  <h1>Tokens</h1>
+  <p class="thesis">A tokenizer's whole output vocabulary is <b>five shapes</b>. Tree construction — everything this course is about — never sees raw text. It only ever sees one of these five.</p>
+</header>
+
+<section class="mod">
+  <div class="modhead"><span class="modnum">P1</span><h2>The five token kinds</h2></div>
+
+  <div class="analogy">
+    <p>Think of the tokenizer as a court stenographer, not a judge. It doesn't decide what markup <em>means</em> — it just chops the character stream into labeled slips of paper and passes them, one at a time, to whoever's making decisions downstream (that's tree construction, starting at Module 00).</p>
+  </div>
+
+  <div class="spec">
+    <ol>
+      <li><strong>DOCTYPE</strong> — <code>&lt;!DOCTYPE html&gt;</code>. Carries a name, and public/system identifiers (almost always all empty in modern HTML).</li>
+      <li><strong>Start tag</strong> — <code>&lt;table&gt;</code>, <code>&lt;tr id="x"&gt;</code>. Carries a tag name, an attribute list, and a self-closing flag.</li>
+      <li><strong>End tag</strong> — <code>&lt;/table&gt;</code>. Carries a tag name only — attributes on an end tag are a parse error and are discarded by the tokenizer before tree construction ever sees the token.</li>
+      <li><strong>Comment</strong> — <code>&lt;!-- ... --&gt;</code>. Carries the comment data as one string.</li>
+      <li><strong>Character</strong> — a single character of text. <strong>Not</strong> a run of text — the tokenizer emits one character token per character. (Module 08 depends on this: it's why "in table text" has to buffer a whole run itself.)</li>
+    </ol>
+    <p>Plus one sentinel that isn't really a token but is handled identically by every insertion mode's dispatch table: <strong>end-of-file</strong>.</p>
+  </div>
+
+  <div class="callout watch">
+    <span class="ct">Watch it</span>
+    <p>"Character token" being per-character, not per-run, surprises people who assume the tokenizer does the batching. It doesn't — batching (when it happens at all) is tree construction's job, and it only happens in exactly one insertion mode. See Module 08.</p>
+  </div>
+
+  <h3>What our engine's token objects look like</h3>
+  <pre><code><span class="c">// track1-core/00_tokens_and_nodes/src/tokens.js — the whole vocabulary</span>
+{ type: <span class="y">'DOCTYPE'</span>,   name, publicId, systemId, forceQuirks }
+{ type: <span class="y">'StartTag'</span>,  tagName, attrs: <span class="y">Map</span>, selfClosing }
+{ type: <span class="y">'EndTag'</span>,    tagName }
+{ type: <span class="y">'Comment'</span>,   data }
+{ type: <span class="y">'Character'</span>, data }      <span class="c">// one character</span>
+{ type: <span class="y">'EOF'</span> }</code></pre>
+</section>
+
+<div class="modnav">
+  <span></span>
+  <span class="next"><span class="dir">Next</span><a href="prereq_dom_node_shape.html">P2 — The DOM node shape →</a></span>
+</div>
+
+</div>
+</body>
+</html>

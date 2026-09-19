@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Deep Dive · The Noah's Ark Clause — Foster Parenting course</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../templates/course.css">
+</head>
+<body>
+<div class="sheet">
+
+<header class="masthead">
+  <p class="eyebrow">Cluster 02 · Deep dive 1 of 2 · Performance tradeoffs</p>
+  <h1>The Noah's Ark<em>Clause</em></h1>
+  <p class="thesis">Module 10 built reconstruction without it, honestly, because no test needed it. This page explains what it's actually for — and does the arithmetic on why the spec's authors thought it was worth a special case.</p>
+</header>
+
+<section class="mod">
+  <div class="modhead"><span class="modnum">01</span><h2>The Big Analogy</h2></div>
+  <div class="analogy">
+    <p>Two of every kind boards the ark; the third and every subsequent one is turned away. The active formatting elements list has the same rule: if three entries since the last marker already share the same tag name, namespace, and attribute set, the EARLIEST of the three is evicted the moment a fourth would-be match tries to join. Not because a fourth matching entry is wrong, exactly — but because letting the list grow without bound turns a cheap, routine check (reconstruction, run before nearly every insertion) into an expensive one.</p>
+  </div>
+</section>
+
+<section class="mod">
+  <div class="modhead"><span class="modnum">02</span><h2>The Mechanism, and the arithmetic</h2></div>
+  <div class="spec">
+    <p>"Push onto the list of active formatting elements" first checks whether three entries since the last marker already match the new element's tag name, namespace, AND attributes (compared as they were at parser-creation time, unordered). If so, the earliest of the three matching entries is removed before the new one is pushed. The spec names this the Noah's Ark clause and notes it's three per family, not two.</p>
+    <p><strong>Why it matters for cost, not just correctness:</strong> reconstruction (Module 10) walks the list backward from the end every time it's invoked, and — in the worst case, when nothing on the list is already on the stack — recreates every entry it walked past. Input like <code>&lt;b&gt;&lt;b&gt;&lt;b&gt;&lt;b&gt;…</code> (some malformed or adversarial markup does exactly this) would, without the Ark clause, grow the list without bound, and EVERY subsequent character insertion's reconstruction call would walk and potentially recreate an ever-growing chain — turning what should be a cheap per-token check into work that scales with how many <code>&lt;b&gt;</code> tags appeared earlier in the document. With the clause capping same-family entries at three, that walk is bounded no matter how many <code>&lt;b&gt;</code> tags the source contains.</p>
+  </div>
+  <div class="callout crazy">
+    <span class="ct">Why this course didn't build it</span>
+    <p>Module 10's own test case (the spec's canonical triple-<code>&lt;b&gt;</code> example) only ever has ONE <code>&lt;b&gt;</code> entry on the list at a time — nowhere near the three-in-a-row threshold that would trigger eviction. Building the clause would have been code with no test able to exercise it, which is exactly the kind of speculative addition this course's engineering conventions warn against. It's real, it's well-motivated, and it's absent — all three of those are true at once, and Module 10's DECISIONS.md says so directly rather than pretending the gap doesn't exist.</p>
+  </div>
+</section>
+
+<div class="modnav">
+  <span><span class="dir">Previous</span><a href="01_explainer.html">← Back to the overview</a></span>
+  <span class="next"><span class="dir">Next</span><a href="03_deepdive_security_implications.html">Deep dive: security implications →</a></span>
+</div>
+
+<div class="colophon">
+  <h3>Colophon</h3>
+  <p>Part of the <a href="../README.md">lessons/ cluster set</a>. Primary source: the attached reference course's own Module 11 ("Scope: why table is a wall," the Noah's Ark aside), and this course's <a href="../../track1-core/10_formatting_triple_b/DECISIONS.md">Track 1 Module 10 DECISIONS.md</a>.</p>
+</div>
+
+</div>
+</body>
+</html>

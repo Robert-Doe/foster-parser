@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cluster · Scope & Active Formatting Elements — Foster Parenting course</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../templates/course.css">
+</head>
+<body>
+<div class="sheet">
+
+<header class="masthead">
+  <p class="eyebrow">Cluster 02 · Spans Modules 02, 04, 10, 13</p>
+  <h1>Scope &<em>Active Formatting Elements</em></h1>
+  <p class="thesis">Built four modules apart, on purpose — but they're the two halves of one mechanism the real spec calls the adoption agency algorithm. This page puts them next to each other.</p>
+</header>
+
+<section class="mod">
+  <div class="modhead"><span class="modnum">01</span><h2>The Big Analogy</h2></div>
+  <div class="analogy">
+    <p>Scope (Module 13) is a rule about which doors an END TAG's key can reach. The active formatting elements list (Module 10) is a standing guest list that gets consulted on INSERTIONS, not departures. They read like they should be opposites — one gates exits, one triggers entries — but the real spec's adoption agency algorithm (which this course doesn't build) is specifically the machinery for when BOTH matter on the same end tag at once: an end tag whose target isn't simply "the current node," but is buried under other still-open elements the naive scope-and-pop logic (this course's Module 13) can't resolve on its own.</p>
+  </div>
+</section>
+
+<section class="mod">
+  <div class="modhead"><span class="modnum">02</span><h2>The Mechanism — where each one actually lives</h2></div>
+  <div class="spec">
+    <p><strong>Scope (Module 13, built on Module 04's five-element derivation):</strong> a read-only question about the STACK OF OPEN ELEMENTS — "walking down from current node, do I hit `target` before I hit a wall?" Table, `td`, `th`, and a handful of others are walls. This is what stops a stray `</div>` inside a `<td>` from reaching an outer `<div>` (Module 13's central proof).</p>
+    <p><strong>Active formatting elements (Module 10, gated by Module 02's predicate):</strong> a separate list, mutated on insertion and on specific clearing operations (table cleanup pops the STACK without touching this list — the entire mechanism behind the triple-`<b>` example). This is what makes a formatting element get silently, correctly RECREATED after table cleanup severs it from the stack.</p>
+    <p><strong>Where they'd meet, if this course built it:</strong> the adoption agency algorithm processes an end tag (like a misnested `</a>` or `</nobr>`) by searching the ACTIVE FORMATTING LIST for a matching entry, then checking that entry's relationship to the STACK — using scope-adjacent reasoning to decide how to restructure the tree. It is, in effect, "scope's boundary logic, applied to formatting-list entries instead of literal end-tag targets, with a tree-restructuring step Module 13 never needed." Track 1 stops short of building this — see Module 10's <a href="../../track1-core/10_formatting_triple_b/concept_adoption_agency.html">concept_adoption_agency.html</a> for exactly where the line is drawn.</p>
+  </div>
+</section>
+
+<section class="mod">
+  <div class="modhead"><span class="modnum">03</span><h2>Why four modules apart, on purpose</h2></div>
+  <div class="callout brain">
+    <span class="ct">The pedagogical reasoning</span>
+    <p>Module 02 (the gate) and Module 04 (the five elements) had to come early — everything in Track 1 depends on them. Module 10 (active formatting elements) needed Module 05's full insertion-location algorithm to exist first, since reconstruction's whole point is that recreated elements get fostered too. Module 13 (scope) needed nothing from Module 10 at all — it's built entirely on the stack (Prerequisite P3) and the five-element derivation (Module 04), with zero dependency on the formatting list. Placing it last was a sequencing choice, not a dependency requirement — see this cluster's own reason for existing: two mechanisms that never call each other in this course's code, but that any reader building toward a full implementation needs to see as two faces of one larger algorithm.</p>
+  </div>
+</section>
+
+<div class="modnav">
+  <span></span>
+  <span class="next"><span class="dir">Next</span><a href="02_deepdive_noahs_ark.html">Deep dive: the Noah's Ark clause →</a></span>
+</div>
+
+<div class="colophon">
+  <h3>Colophon</h3>
+  <p>Part of the <a href="../README.md">lessons/ cluster set</a>. Spans Track 1 Modules 02, 04, 10, 13.</p>
+</div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Deep Dive · Mode-Collapsing Decision History — Foster Parenting course</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../templates/course.css">
+</head>
+<body>
+<div class="sheet">
+
+<header class="masthead">
+  <p class="eyebrow">Cluster 01 · Deep dive 1 of 2 · History &amp; tradeoffs</p>
+  <h1>The Full Mode-Collapsing<em>Decision History</em></h1>
+  <p class="thesis">Every place this course's engine merged real spec modes together, in the order it happened, with the reasoning re-stated and the eventual cost tallied.</p>
+</header>
+
+<section class="mod">
+  <div class="modhead"><span class="modnum">1</span><h2>Module 05 — the founding decision</h2></div>
+  <div class="spec">
+    <p>Module 05's <code>dispatch5.js</code> needed to reach a nested-table test case (<code>&lt;table&gt;&lt;td&gt;&lt;table&gt;&lt;tr&gt;FOO&lt;/table&gt;&lt;/table&gt;</code>) that requires <code>&lt;td&gt;</code> and <code>&lt;tr&gt;</code> handling. Building real <code>in table body</code>/<code>in row</code>/<code>in cell</code> modes for this one case would have meant three new mode tables for a single test. Instead, <code>&lt;td&gt;</code>/<code>&lt;tr&gt;</code> insertion stayed nominally in "in table" mode, with the stack's own current-node identity — not the mode name — doing the work that would otherwise require the extra modes.</p>
+    <p><strong>Justification at the time:</strong> Module 02's gate (<code>isFosterParentingTarget</code>) checks current node identity directly. A <code>&lt;tr&gt;</code> current node fosters; a <code>&lt;td&gt;</code> current node doesn't — regardless of what the engine calls the mode it's nominally in. Module 05's own test (FOO correctly fostered from a <code>&lt;tr&gt;</code>, correctly NOT fostered from a <code>&lt;td&gt;</code>, in the same real parse) is direct proof this reasoning held for that case.</p>
+  </div>
+</section>
+
+<section class="mod">
+  <div class="modhead"><span class="modnum">2</span><h2>Module 08 — independent re-confirmation</h2></div>
+  <div class="spec">
+    <p>Module 08's buffering (<code>in table text</code>) runs whenever a <code>Character</code> token arrives in "in table" mode — with no check for whether the real spec would be in <code>in table</code>, <code>in table body</code>, <code>in row</code>, or <code>in cell</code> at that exact moment. Its own DECISIONS.md re-derives, independently of Module 05, that this is safe: buffering delays *when* a character gets inserted, never changes *what the current node is* when it finally does, so the gate's answer is unaffected either way. Two modules, two different features, the same underlying argument holding both times — evidence the collapsing decision was structurally sound, not just lucky once.</p>
+  </div>
+</section>
+
+<section class="mod">
+  <div class="modhead"><span class="modnum">3</span><h2>Module 11 — where the argument finally breaks</h2></div>
+  <div class="spec">
+    <p>Module 11 needed a <code>&lt;template&gt;</code> containing a <code>&lt;tr&gt;</code>. Real spec: entering a template pushes a NEW mode-dispatch context (<code>in template</code>) whose <code>&lt;tr&gt;</code> rule sends straight to <code>in table body</code> — <em>skipping</em> "in table"'s own tbody-implying step entirely. This engine's collapsed model has no such skip available: everything still funnels through the SAME "in table" handling that implies a tbody whenever current node isn't already tbody-ish, because that's the only handling that exists. Result: an extra, spurious <code>&lt;tbody&gt;</code> a real browser doesn't produce.</p>
+    <p>The Module 05/08 argument ("current node identity is all that matters") is still TRUE here, as far as it goes — the foster-parenting gate still answers correctly. What breaks is a completely different piece of logic (the tbody-implying rule) that, unlike the gate, genuinely does depend on which of the collapsed modes you're "really" in — a distinction this engine threw away three modules earlier.</p>
+  </div>
+  <div class="callout crazy">
+    <span class="ct">Crazy detail</span>
+    <p>Module 11 didn't undo the collapse — undoing it would mean building a real <code>in template</code> mode-dispatch stack, a genuinely new piece of machinery. Instead, it changed its OWN test input (from a bare <code>&lt;tr&gt;</code> to an explicit <code>&lt;tbody&gt;</code>) to sidestep the one rule that needed the distinction, verified the substitute case against a real browser first, and documented the avoided case by name. A three-module-old architectural decision, still net-positive everywhere else, produced one specific, nameable gap — and the fix was scoping around it honestly rather than either patching over it silently or re-architecting three modules of already-verified code.</p>
+  </div>
+</section>
+
+<div class="modnav">
+  <span><span class="dir">Previous</span><a href="01_explainer.html">← Back to the overview</a></span>
+  <span class="next"><span class="dir">Next</span><a href="03_deepdive_the_select_deletion.html">Deep dive: the select mode deletion →</a></span>
+</div>
+
+<div class="colophon">
+  <h3>Colophon</h3>
+  <p>Part of the <a href="../README.md">lessons/ cluster set</a>. See <a href="../../track1-core/05_seven_substeps/DECISIONS.md">Module 05</a>, <a href="../../track1-core/08_in_table_text/DECISIONS.md">Module 08</a>, and <a href="../../track1-core/11_templates_fragments/DECISIONS.md">Module 11</a>'s own DECISIONS.md files for the primary-source reasoning this page synthesizes.</p>
+</div>
+
+</div>
+</body>
+</html>

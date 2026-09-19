@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Deep Dive · The Select Mode Deletion — Foster Parenting course</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../templates/course.css">
+</head>
+<body>
+<div class="sheet">
+
+<header class="masthead">
+  <p class="eyebrow">Cluster 01 · Deep dive 2 of 2 · A real-world case study</p>
+  <h1>The Select Mode<em>Deletion</em></h1>
+  <p class="thesis">This course removed three modes for pedagogical reasons. The real HTML Standard removed two modes for a completely different, shipping-browser reason — in 2024–25, not as a hypothetical.</p>
+</header>
+
+<section class="mod">
+  <div class="modhead"><span class="modnum">1</span><h2>The Big Analogy</h2></div>
+  <div class="analogy">
+    <p>This course's mode collapsing (deep dive 1) was a construction shortcut, taken once, up front, for a building nobody else will ever occupy. The real spec's <code>in select</code>/<code>in select in table</code> removal is a wing of a building actually in use by billions of people, demolished and rebuilt while people were still walking through it — because the old wing's rules ("almost nothing can go inside a <code>&lt;select&gt;</code> except <code>&lt;option&gt;</code>/<code>&lt;optgroup&gt;</code>/<code>&lt;hr&gt;</code>") turned out to be actively blocking a feature (stylable, rich-content <code>&lt;select&gt;</code> elements) that browser vendors wanted to ship.</p>
+  </div>
+</section>
+
+<section class="mod">
+  <div class="modhead"><span class="modnum">2</span><h2>The Mechanism</h2></div>
+  <div class="spec">
+    <p>Per this course's own Module 12 atlas row and the attached reference course's own Module 12: the <code>in select</code> and <code>in select in table</code> insertion modes have been removed from the current HTML Standard entirely. The motivation was the customizable/stylable <code>&lt;select&gt;</code> work (<code>appearance: base-select</code>) — the old parser discarded almost every tag inside <code>&lt;select&gt;</code> other than <code>&lt;option&gt;</code>, <code>&lt;optgroup&gt;</code>, and <code>&lt;hr&gt;</code>, which made rich <code>&lt;select&gt;</code> UI unmarkupable no matter what CSS shipped alongside it. Removing the dedicated modes lets ordinary content through; the one behavior worth preserving — a nested <code>&lt;select&gt;</code> start tag acting as an implied <code>&lt;/select&gt;</code> — was reimplemented as a stack-traversal check borrowed from how <code>&lt;button&gt;</code> already handled the analogous case.</p>
+  </div>
+  <div class="callout brain">
+    <span class="ct">Why this belongs in a mode-collapsing deep dive specifically</span>
+    <p>The outcome for foster parenting barely changed: <code>&lt;table&gt;&lt;select&gt;&lt;option&gt;x</code> still fosters the <code>&lt;select&gt;</code> to just before the table, and the <code>&lt;option&gt;</code> still ends up inside it — but it used to happen because a dedicated insertion mode captured the tokens, and now happens because the current node is a <code>select</code>, and <code>select</code> simply isn't one of the five foster-parenting elements (Module 04). An entire pair of insertion modes was deleted from a shipping spec, and the foster-parenting behavior fell out UNCHANGED — the strongest possible confirmation, from a much higher-stakes context than this course's own engine, that the rule keys on current-node identity per insertion, never on which mode happens to be active.</p>
+  </div>
+</section>
+
+<section class="mod">
+  <div class="modhead"><span class="modnum">3</span><h2>Limits — what this deep dive does NOT claim</h2></div>
+  <div class="compare">
+    <div class="cant">
+      <h4>Not claimed</h4>
+      <ul>
+        <li>That this course's engine implements either the old or new <code>&lt;select&gt;</code> behavior — neither is built (Module 12's atlas, honestly)</li>
+        <li>That every mode-collapsing decision is this safe — deep dive 1 documents a case (Module 11) where an analogous collapse genuinely cost something</li>
+      </ul>
+    </div>
+    <div class="can">
+      <h4>Claimed</h4>
+      <ul>
+        <li>That a real, shipping specification change independently confirms this course's central architectural bet (current-node identity, not mode name, is what matters for fostering)</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<div class="modnav">
+  <span><span class="dir">Previous</span><a href="02_deepdive_mode_collapsing.html">← Deep dive: mode-collapsing decision history</a></span>
+  <span class="next"><span class="dir">Back to</span><a href="01_explainer.html">the cluster overview →</a></span>
+</div>
+
+<div class="colophon">
+  <h3>Colophon</h3>
+  <p>Part of the <a href="../README.md">lessons/ cluster set</a>. Primary source: <code>whatwg/html</code> PR #10557 against issue #10310 (see root <a href="../../REFERENCES.md">REFERENCES.md</a>), and this course's own <a href="../../track1-core/12_containment_atlas/tutorial.html">Track 1 Module 12</a>.</p>
+</div>
+
+</div>
+</body>
+</html>

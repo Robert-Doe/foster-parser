@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>P5 · Appropriate place for inserting a node — Foster Parenting course prerequisites</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../templates/course.css">
+</head>
+<body>
+<div class="sheet">
+
+<header class="masthead">
+  <p class="eyebrow">Prerequisite P5 · the chokepoint</p>
+  <h1>Appropriate place<em>for inserting a node</em></h1>
+  <p class="thesis">Every single insertion this course examines — element, text, comment, foreign — passes through <b>one algorithm</b> before it lands anywhere. Foster parenting isn't a separate mechanism bolted onto insertion. It's step 2 of this one.</p>
+</header>
+
+<section class="mod">
+  <div class="modhead"><span class="modnum">P5</span><h2>The three-step shape</h2></div>
+
+  <div class="analogy">
+    <p>Think of it as the one reception desk every arriving guest must pass through, no matter which door they came in by (a start tag, a character, a comment, an SVG element). The desk has exactly three questions on its checklist, asked in order, and most guests only ever trigger the first: "who did you ask to see?"</p>
+  </div>
+
+  <div class="spec">
+    <p>Given an optional <var>override target</var> (defaults to the current node, P3):</p>
+    <ol>
+      <li><strong>Determine the target.</strong> <var>target</var> = the override target if supplied, else the current node.</li>
+      <li><strong>If foster parenting is enabled and target qualifies</strong> (Track 1 Modules 02–05 are entirely about this step) — run the foster-parenting substeps instead, which compute a different <var>adjusted insertion location</var> entirely.</li>
+      <li><strong>Otherwise</strong> — adjusted insertion location = inside <var>target</var>, after its last child. (Template elements get one more redirect here: landing inside a <code>&lt;template&gt;</code> redirects into its template contents fragment — this applies whether or not step 2 fired.)</li>
+    </ol>
+    <p>The output of this whole algorithm — the <em>adjusted insertion location</em> — is a (parent, position) pair. Every downstream "insert a ___" algorithm (insert an HTML element, insert a character, insert a comment, insert a foreign element) calls this first, then splices into whatever it returned.</p>
+  </div>
+
+  <div class="callout brain">
+    <span class="ct">Brain power</span>
+    <p>Notice what this means for Track 1 Module 04's five-element list: those five elements are not special because insertion treats them differently in general. They're special <em>only</em> because they're the only targets for which step 2's condition can ever be true. Every other element always falls through to step 3 — plain, boring, "after target's last child." Foster parenting is the exception path for five elements out of the entire HTML element inventory.</p>
+  </div>
+
+  <h3>Why every module in Track 1 keeps returning to this page</h3>
+  <p>Modules 02 through 09 are, in order, an exploded view of this one algorithm: 02–03 are step 2's gating condition, 05 is step 2's substeps in full, 06–09 are consequences of what step 2 produces once it fires. If you get lost in any of those modules, the fix is usually to come back here and re-locate which step you're inside.</p>
+</section>
+
+<div class="modnav">
+  <span><span class="dir">Previous</span><a href="prereq_insertion_modes.html">← P4 — Insertion modes</a></span>
+  <span class="next"><span class="dir">Next</span><a href="../track1-core/00_tokens_and_nodes/tutorial.html">Module 00 — Tokens & the DOM node shape →</a></span>
+</div>
+
+</div>
+</body>
+</html>

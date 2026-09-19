@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cluster · The Insertion Mode Statechart — Foster Parenting course</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../templates/course.css">
+</head>
+<body>
+<div class="sheet">
+
+<header class="masthead">
+  <p class="eyebrow">Cluster 01 · Spans Prerequisite P4 and Modules 01, 03, 05, 08, 10, 11, 12, 13</p>
+  <h1>The Insertion Mode<em>Statechart</em></h1>
+  <p class="thesis">The real spec has ~20 insertion modes. This course's engine ended up with roughly six. This page is the map of exactly which real modes survived, which got merged, and — most importantly — where that merging was free and where it cost something.</p>
+</header>
+
+<section class="mod">
+  <div class="modhead"><span class="modnum">01</span><h2>The Big Analogy</h2></div>
+  <div class="analogy">
+    <p>Imagine translating a twenty-room office building into a six-room apartment, on the theory that most of the twenty rooms were only ever used for one specific, narrow purpose that a shared room could handle just as well. Most of the time, nobody notices the difference — the shared room handles whatever comes in correctly. Then, one day, something arrives that behaves differently depending on which of the original twenty rooms it would have been in, and the shared room gets it wrong, because it genuinely can't tell which of the original rooms this visitor "belongs" in anymore. That day is Module 11's Bug 2.</p>
+  </div>
+</section>
+
+<section class="mod">
+  <div class="modhead"><span class="modnum">02</span><h2>The Mechanism — real modes vs. this engine's modes</h2></div>
+  <div class="tblwrap">
+  <table>
+    <thead><tr><th>Real spec mode</th><th>Built in this engine as...</th><th>First appeared</th></tr></thead>
+    <tbody>
+      <tr><td><code>initial</code></td><td>itself</td><td>Module 01</td></tr>
+      <tr><td><code>before html</code></td><td>itself</td><td>Module 01</td></tr>
+      <tr><td><code>before head</code></td><td>itself</td><td>Module 01</td></tr>
+      <tr><td><code>in head</code></td><td>itself (minimal: whitespace + <code>&lt;/head&gt;</code> only)</td><td>Module 01</td></tr>
+      <tr><td><code>after head</code></td><td>itself</td><td>Module 01</td></tr>
+      <tr><td><code>in body</code></td><td>itself, progressively extended</td><td>Module 01, extended through 13</td></tr>
+      <tr><td><code>in table</code></td><td>itself</td><td>Module 02 (gate), Module 03 (flag), Module 05 (rules)</td></tr>
+      <tr><td><code>in table text</code></td><td>itself</td><td>Module 08</td></tr>
+      <tr class="tgt"><td><code>in table body</code></td><td class="yes">collapsed into <code>in table</code></td><td>Module 05's decision</td></tr>
+      <tr class="tgt"><td><code>in row</code></td><td class="yes">collapsed into <code>in table</code></td><td>Module 05's decision</td></tr>
+      <tr class="tgt"><td><code>in cell</code></td><td class="yes">collapsed into <code>in table</code></td><td>Module 05's decision</td></tr>
+      <tr><td><code>in caption</code>, <code>in column group</code></td><td class="no">not built</td><td>never — Module 04's colgroup/caption rows stay honestly unimplemented</td></tr>
+      <tr><td><code>in template</code> (+ template insertion modes stack)</td><td class="no">not built</td><td>never — Module 11's Bug 2 is exactly this gap surfacing</td></tr>
+      <tr><td><code>in select</code>, <code>in select in table</code></td><td class="no">removed from the real spec too (2024–25)</td><td>Module 12's atlas row</td></tr>
+      <tr><td>after body, in frameset, after frameset, after after body, after after frameset</td><td class="no">not built</td><td>never — no test case needs a frameset document or trailing content</td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<section class="mod">
+  <div class="modhead"><span class="modnum">03</span><h2>Where the collapse was free, and where it wasn't</h2></div>
+  <div class="spec">
+    <p><strong>Free (Modules 05–10):</strong> every test case through Module 10 that involved a `<tr>`/`<td>`/`<th>` current node behaved identically whether the engine called its mode "in table" or the real spec's "in row"/"in cell," because the ONE thing that actually varies by current-node-family — the foster-parenting gate (Module 02) — checks current node identity directly, never the mode's name. Module 05's own DECISIONS.md argues this explicitly and Module 08 independently re-derives the same conclusion for buffered character content.</p>
+    <p><strong>Not free (Module 11):</strong> the real <code>in template</code> mode doesn't just relabel <code>in table body</code>/<code>in row</code> — it <em>skips</em> the tbody-implying step those modes perform when reached the normal way, dispatching <code>&lt;tr&gt;</code> straight to a mode that inserts it directly. That skip is a genuinely separate rule this engine's collapsed model has no way to express, because collapsing erased the seam where that rule would attach. Module 11 didn't fix this — it changed its test input to avoid the seam entirely, and said so.</p>
+  </div>
+  <div class="callout brain">
+    <span class="ct">The general lesson</span>
+    <p>Collapsing two states into one is safe exactly as long as nothing downstream ever needs to ask "wait, which of the two original states was this, really?" The gate (Module 02) never asks that question — it asks a different, current-node-shaped question that happens to give the same answer either way. The <code>in template</code> mode-dispatch table DOES ask that question, directly, by name. That's the precise, checkable difference between the modules where collapsing cost nothing and the one where it did.</p>
+  </div>
+</section>
+
+<div class="modnav">
+  <span></span>
+  <span class="next"><span class="dir">Next</span><a href="02_deepdive_mode_collapsing.html">Deep dive: the full mode-collapsing decision history →</a></span>
+</div>
+
+<div class="colophon">
+  <h3>Colophon</h3>
+  <p>Part of the <a href="../README.md">lessons/ cluster set</a>. Spans Track 1 Prerequisite P4 and Modules 01, 03, 05, 08, 10, 11, 12, 13.</p>
+</div>
+
+</div>
+</body>
+</html>

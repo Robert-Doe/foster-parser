@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>P4 · Insertion modes — Foster Parenting course prerequisites</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../templates/course.css">
+</head>
+<body>
+<div class="sheet">
+
+<header class="masthead">
+  <p class="eyebrow">Prerequisite P4 · the "states" you asked about</p>
+  <h1>Insertion<em>modes</em></h1>
+  <p class="thesis">An insertion mode is <b>not</b> a rendering state, a tokenizer state, or a CSS concept. It is one thing only: <b>which table of rules the parser currently consults to decide what to do with the next token.</b></p>
+</header>
+
+<section class="mod">
+  <div class="modhead"><span class="modnum">P4</span><h2>What a "state" actually is here</h2></div>
+
+  <div class="analogy">
+    <p>Picture a government office building where every visitor (token) has to be processed at a desk, and there are ~20 desks, each staffed by a clerk who only knows one specific rulebook. "Insertion mode" is just <em>which desk the parser is currently sitting at</em>. Walking a visitor to a different desk mid-processing — because their paperwork turned out to need a different rulebook — is a mode <em>switch</em>. It doesn't change the visitor. It changes which rulebook gets consulted next.</p>
+    <p>Crucially: the current desk is a single global variable. There's exactly one "current insertion mode" for the whole parser at any instant — it is not per-element, not stacked (that's what the stack of open elements, P3, is for), just one name.</p>
+  </div>
+
+  <div class="spec">
+    <p>§13.2.4.1 defines the insertion mode as parser state consulted by "tree construction dispatcher" every time a token needs processing. Modern HTML Standard (2025+, after the <code>&lt;select&gt;</code> mode removal covered in Track 1 Module 12) lists these:</p>
+    <div class="tblwrap">
+    <table>
+      <thead><tr><th>Mode</th><th>Roughly: active while parsing…</th><th>Foster-parenting relevant?</th></tr></thead>
+      <tbody>
+        <tr><td><code>initial</code></td><td>before anything, deciding quirks mode</td><td class="no">no</td></tr>
+        <tr><td><code>before html</code></td><td>before the <code>&lt;html&gt;</code> tag</td><td class="no">no</td></tr>
+        <tr><td><code>before head</code></td><td>before <code>&lt;head&gt;</code></td><td class="no">no</td></tr>
+        <tr><td><code>in head</code></td><td>inside <code>&lt;head&gt;</code></td><td class="no">no</td></tr>
+        <tr><td><code>in head noscript</code></td><td>inside <code>&lt;head&gt;&lt;noscript&gt;</code></td><td class="no">no</td></tr>
+        <tr><td><code>after head</code></td><td>between <code>&lt;/head&gt;</code> and <code>&lt;body&gt;</code></td><td class="no">no</td></tr>
+        <tr><td><code>in body</code></td><td>ordinary document content — the default workhorse mode</td><td class="no">no (but is where fostered "anything else" tokens get processed <em>from</em>)</td></tr>
+        <tr><td><code>text</code></td><td>inside RAWTEXT/RCDATA elements like <code>&lt;title&gt;</code>, <code>&lt;textarea&gt;</code></td><td class="no">no</td></tr>
+        <tr><td class="yes"><code>in table</code></td><td>current node is <code>table</code></td><td class="yes">YES — the only mode that <em>enables</em> the flag</td></tr>
+        <tr><td class="yes"><code>in table text</code></td><td>buffering a run of character tokens seen while in "in table"</td><td class="yes">YES — Module 08</td></tr>
+        <tr><td>in caption</td><td>current node is <code>caption</code></td><td class="no">no — fails condition 2 even if reached</td></tr>
+        <tr><td>in column group</td><td>current node is <code>colgroup</code></td><td class="no">indirect — pops &amp; reprocesses into "in table"</td></tr>
+        <tr><td class="yes">in table body</td><td>current node is <code>tbody</code>/<code>thead</code>/<code>tfoot</code></td><td class="yes">YES — defers to "in table" rules</td></tr>
+        <tr><td class="yes">in row</td><td>current node is <code>tr</code></td><td class="yes">YES — defers to "in table" rules</td></tr>
+        <tr><td>in cell</td><td>current node is <code>td</code>/<code>th</code></td><td class="no">no — sends leftovers to "in body" directly</td></tr>
+        <tr><td>in template</td><td>current node is a <code>template</code>'s content</td><td class="no">no</td></tr>
+        <tr><td>after body</td><td>after <code>&lt;/body&gt;</code></td><td class="no">no</td></tr>
+        <tr><td>in frameset</td><td>frameset documents</td><td class="no">no</td></tr>
+        <tr><td>after frameset</td><td>after <code>&lt;/frameset&gt;</code></td><td class="no">no</td></tr>
+        <tr><td>after after body</td><td>trailing content after a complete document</td><td class="no">no</td></tr>
+        <tr><td>after after frameset</td><td>trailing content after a complete frameset document</td><td class="no">no</td></tr>
+      </tbody>
+    </table>
+    </div>
+    <p>Five modes are marked YES — and if you look closely, they are exactly the five elements from Track 1 Module 04's fostering list, each with its own mode named after it (<code>tbody</code>/<code>thead</code>/<code>tfoot</code> share "in table body"; <code>table</code> itself is "in table"). That is not a coincidence — a mode exists <em>because</em> that element's children need special handling, and the table-family modes' special handling is, at bottom, foster parenting.</p>
+  </div>
+
+  <div class="callout crazy">
+    <span class="ct">Crazy detail</span>
+    <p>A mode switch and a token dispatch are two different operations that happen to often occur together. "Reprocess the token" — which shows up constantly (in column group, in table text, the fragment-parsing algorithm) — means: switch modes, then <strong>run the exact same token again</strong> through the new mode's rules, without consuming a new one from the tokenizer. This is why a single input token can be "seen" by more than one mode's rules before it's finally consumed.</p>
+  </div>
+
+  <h3>How this differs from the tokenizer's states</h3>
+  <p>The tokenizer (P1) has its own, much larger state machine (~80 states: <em>data state</em>, <em>tag open state</em>, <em>RAWTEXT state</em>, …) that governs how raw characters become tokens. That machine is invisible from here on — this course's engine implements only enough tokenizer behavior to correctly emit the six token shapes from P1. Insertion modes are a completely separate, much smaller state machine that consumes those tokens. Conflating the two is one of the most common confusions in this subject — worth flagging now so it doesn't resurface in Module 01.</p>
+
+</section>
+
+<div class="modnav">
+  <span><span class="dir">Previous</span><a href="prereq_stack_of_open_elements.html">← P3 — The stack of open elements</a></span>
+  <span class="next"><span class="dir">Next</span><a href="prereq_appropriate_place.html">P5 — Appropriate place for inserting a node →</a></span>
+</div>
+
+</div>
+</body>
+</html>
