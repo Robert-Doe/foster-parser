@@ -1,9 +1,9 @@
-// Foster Parser — HTML5 Tree Construction Visualizer
+// Foster Parser, HTML5 Tree Construction Visualizer
 //
 // Every insertion-mode transition, stack snapshot, and foster-parenting
 // decision shown here comes from the REAL, unmodified tree-construction
 // engine ported verbatim from this repo's track1-core/ course build
-// (Modules 00, 01, 02, 05, 07, 08, 10 — see src/engine/*.ts headers for the
+// (Modules 00, 01, 02, 05, 07, 08, 10, see src/engine/*.ts headers for the
 // exact source file each was ported from). src/engine/trace.ts is this
 // demo's own driver code, composing those real pieces the same way the
 // repo's own module_10 demo.js does, just recording a step-by-step trace.
@@ -11,7 +11,7 @@
 // SAFETY: this page is 100% client-side. The optional "render for real"
 // toggle below renders the visitor's OWN input, in their OWN browser, inside
 // a sandboxed <iframe sandbox="allow-scripts"> (no allow-same-origin) via
-// srcdoc — never a same-origin src. No input is ever sent to a server,
+// srcdoc, never a same-origin src. No input is ever sent to a server,
 // stored, logged, or shown to any other visitor.
 import { runTrace, ensureBoilerplate, type TraceStep, type ParseResult } from './engine/trace.js';
 
@@ -213,7 +213,7 @@ function renderSandbox() {
   iframeShellEl.innerHTML = '';
   const iframe = document.createElement('iframe');
   iframe.setAttribute('sandbox', 'allow-scripts');
-  // srcdoc, never `src` pointing at a same-origin URL — the sandboxed
+  // srcdoc, never `src` pointing at a same-origin URL, the sandboxed
   // document is fully opaque: no allow-same-origin means it cannot read
   // this page's cookies, storage, or DOM, and gets a fresh, unique origin.
   iframe.srcdoc = lastEffectiveHtml;

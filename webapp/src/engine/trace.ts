@@ -1,4 +1,4 @@
-// This file is the visualizer's own driver — it is NOT a ported course
+// This file is the visualizer's own driver, it is NOT a ported course
 // module. It composes the real, unmodified engine pieces (tokenizer.ts,
 // dispatch10.ts, formatting.ts, nodes.ts) exactly the way this repo's own
 // module_10 demo.js does, but records a step-by-step trace instead of just
@@ -30,7 +30,7 @@ export type ParseResult = {
 };
 
 // If the visitor's snippet doesn't already declare <html>, this engine's
-// "in head" mode has no fallback for an unexpected start tag (by design —
+// "in head" mode has no fallback for an unexpected start tag (by design,
 // see track1-core/01_stack_and_dispatch's DECISIONS.md) and would throw
 // before ever reaching the table content the demo is about. Auto-wrapping
 // with the minimal boilerplate a real browser would imply keeps casual
@@ -49,7 +49,7 @@ export function runTrace(rawHtml: string): ParseResult {
   const fosteredNodes = new WeakSet<object>();
   // lastInsertWasFostered reflects the REAL per-insert decision made inside
   // location.ts's getAdjustedInsertionLocation (step 2 vs. step 3 of
-  // "appropriate place for inserting a node") — not merely whether
+  // "appropriate place for inserting a node"), not merely whether
   // state.fosterParentingEnabled happened to be true when this token was
   // processed. Those differ, e.g. for characters buffered while fostering
   // is enabled but whose current node is a <td>, which insert ordinarily.
@@ -68,7 +68,7 @@ export function runTrace(rawHtml: string): ParseResult {
 
   // `log` is the pre-existing instrumentation parameter dispatch10/tabletext
   // already accept in this repo's own source (dispatch10.js calls
-  // log('enable')/log('disable') around the fostering-enabled window) — kept
+  // log('enable')/log('disable') around the fostering-enabled window), kept
   // as a no-op sink here since this visualizer derives fostering from the
   // finer-grained hook above instead.
   const log = (_which: 'enable' | 'disable') => {};
@@ -80,7 +80,7 @@ export function runTrace(rawHtml: string): ParseResult {
   for (let i = 0; i < tokens.length; i++) {
     const token = tokens[i];
     if (token.type === 'EOF') {
-      // This engine has no "after body"/"after html" modes — EOF is where a
+      // This engine has no "after body"/"after html" modes, EOF is where a
       // real spec would still have work to do, but this course's engine
       // intentionally stops modeling behavior here (see dispatch.js
       // DECISIONS.md). Treat it as a clean end of trace, not an error.
@@ -146,7 +146,7 @@ function countFostered(root: any, fostered: WeakSet<object>): number {
 }
 
 // A tree renderer that annotates each line with whether ITS node was
-// fostered — built for this visualizer (mirrors nodes.ts's renderTree
+// fostered, built for this visualizer (mirrors nodes.ts's renderTree
 // connector shape exactly) since the ported renderTree has no reason to
 // know about foster-parenting bookkeeping.
 export function renderTreeWithFosterMarks(node: any, fostered: WeakSet<object>, prefix = '', isLast = true, isRoot = true): string[] {

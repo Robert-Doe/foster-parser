@@ -1,5 +1,5 @@
 // Ported verbatim (CommonJS -> ES module syntax only; logic unchanged) from
-// track1-core/10_formatting_triple_b/src/dispatch10.js in this repo — the
+// track1-core/10_formatting_triple_b/src/dispatch10.js in this repo, the
 // most complete insertion-mode dispatcher this course builds: foster
 // parenting (Module 05), what refuses fostering (Module 07), in-table-text
 // buffering (Module 08), and active-formatting-element reconstruction

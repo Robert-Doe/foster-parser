@@ -5,7 +5,7 @@
 // ONE addition for this visualizer, clearly marked below: an optional insert
 // hook so the demo can record, at the exact moment a node is spliced into a
 // parent, whether foster parenting was active. It does not change WHERE or
-// WHETHER any node is inserted — only observes it.
+// WHETHER any node is inserted, only observes it.
 
 export class Node {
   parent: any = null;
@@ -50,7 +50,7 @@ export function isParentNode(node: any): boolean {
 }
 
 // --- Visualizer-only addition: an optional global insert hook. ---
-// Not part of the ported algorithm — purely an observation point so the demo
+// Not part of the ported algorithm, purely an observation point so the demo
 // can tag which nodes were fostered, without altering insertion behavior.
 type InsertHook = (node: any, parent: any, index: number) => void;
 let insertHook: InsertHook | null = null;
@@ -61,7 +61,7 @@ export function setInsertHook(fn: InsertHook | null) {
 // Splice `node` into `parent`'s children, at `index` (default: append after last child).
 export function insertNode(parent: any, node: any, index: number = parent.children.length) {
   if (!isParentNode(parent)) {
-    throw new TypeError(`Cannot insert into a ${parent.constructor.name} — it has no children array.`);
+    throw new TypeError(`Cannot insert into a ${parent.constructor.name}, it has no children array.`);
   }
   node.parent = parent;
   parent.children.splice(index, 0, node);
@@ -77,7 +77,7 @@ export function tryFuseCharacter(parent: any, data: string, index: number = pare
     before.data += data;
     // Visualizer-only: a fuse is still an "insert-like" event at this
     // location (no new node, but it's the same decision point as
-    // insertNode below) — routing it through the same hook keeps the
+    // insertNode below), routing it through the same hook keeps the
     // hook's caller (trace.ts) from seeing a stale foster/non-foster
     // decision bleed into the NEXT, unrelated insertion.
     if (insertHook) insertHook(before, parent, index);

@@ -9,7 +9,7 @@ import { insertNode, tryFuseCharacter, TextNode, ElementNode } from './nodes.js'
 // optional hook reporting whether THIS SPECIFIC call actually took the
 // foster-parenting branch (step 2 of "appropriate place for inserting a
 // node"), as opposed to merely running while state.fosterParentingEnabled
-// happens to be true. The two are different questions — e.g. characters
+// happens to be true. The two are different questions, e.g. characters
 // buffered while fostering is enabled but whose current node is a <td>
 // (not a table-family element) are NOT fostered, per step 3's ordinary
 // case below. Does not change the algorithm's decision, only observes it.

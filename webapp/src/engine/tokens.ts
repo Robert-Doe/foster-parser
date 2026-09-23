@@ -22,7 +22,7 @@ export function characterToken(data: string) {
   if (data.length !== 1) {
     throw new RangeError(
       `characterToken() takes exactly one character, got ${JSON.stringify(data)} ` +
-      `(length ${data.length}). The tokenizer never batches characters into a token — ` +
+      `(length ${data.length}). The tokenizer never batches characters into a token, ` +
       'see prerequisites/prereq_tokens.html and Track 1 Module 08.'
     );
   }

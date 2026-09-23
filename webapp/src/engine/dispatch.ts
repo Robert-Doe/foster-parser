@@ -1,7 +1,7 @@
 // Ported verbatim (CommonJS -> ES module syntax only; logic unchanged) from
 // track1-core/01_stack_and_dispatch/src/dispatch.js in this repo.
 // The insertion-mode dispatch loop (Prerequisite P4): initial through in body,
-// switching into "in table" — everything "in table" itself does starts in
+// switching into "in table", everything "in table" itself does starts in
 // later modules (foster.js / location.js / dispatch5.js / dispatch10.js).
 import { ElementNode, DocumentNode, TextNode, insertNode, tryFuseCharacter } from './nodes.js';
 
@@ -13,7 +13,7 @@ export class NotImplementedYet extends Error {
       `Insertion mode "${mode}" has no rules yet in this engine (token: ${token.type}` +
       `${token.tagName ? ' ' + token.tagName : ''}). This engine currently implements ` +
       'modes through Module 01 (initial…in body, switching into "in table"). Reaching ' +
-      'this error means the dispatch loop correctly reached the mode — its own rules ' +
+      'this error means the dispatch loop correctly reached the mode, its own rules ' +
       'are built starting in a later module.'
     );
     this.mode = mode;
