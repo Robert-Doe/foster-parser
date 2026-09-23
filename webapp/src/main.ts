@@ -43,9 +43,9 @@ app.innerHTML = `
   <section class="hero">
     <h1>HTML5 Tree Construction, <em>Fostered</em></h1>
     <p class="tagline">
-      A real insertion-mode dispatch loop &mdash; stack of open elements, foster
-      parenting, active-formatting-element reconstruction &mdash; running live in
-      your browser. Type malformed HTML; watch exactly where the spec relocates it.
+      A real insertion-mode dispatch loop, the stack of open elements, foster
+      parenting, active-formatting-element reconstruction, running live in
+      your browser. Type malformed HTML and watch exactly where the spec relocates it.
     </p>
   </section>
 
